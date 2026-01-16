@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import BackendStatus from '@/components/BackendStatus';
 
 const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
@@ -63,6 +64,11 @@ const Sidebar: React.FC = () => {
         })}
       </nav>
 
+      {/* Backend Status */}
+      <div className="px-4 py-2">
+        <BackendStatus />
+      </div>
+
       {/* User section */}
       <div className="p-4 border-t border-sidebar-border">
         <div className="flex items-center gap-3 mb-4 px-2">
@@ -77,7 +83,7 @@ const Sidebar: React.FC = () => {
           </div>
         </div>
         <button
-          onClick={logout}
+          onClick={() => logout()}
           className="nav-item w-full text-sidebar-muted hover:text-destructive"
         >
           <LogOut className="w-5 h-5" />

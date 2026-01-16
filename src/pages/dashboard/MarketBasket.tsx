@@ -1,38 +1,26 @@
 import React, { useState } from 'react';
-import { Search, ShoppingCart, ArrowRight, Sparkles } from 'lucide-react';
+import { Search, ShoppingCart, ArrowRight, Sparkles, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
-const associationRules = [
-  { productA: 'Laptop', productB: 'Laptop Bag', support: 0.42, confidence: 0.78, lift: 2.3 },
-  { productA: 'Smartphone', productB: 'Screen Protector', support: 0.38, confidence: 0.85, lift: 2.8 },
-  { productA: 'Coffee Maker', productB: 'Coffee Beans', support: 0.35, confidence: 0.72, lift: 2.1 },
-  { productA: 'Camera', productB: 'Memory Card', support: 0.31, confidence: 0.89, lift: 3.2 },
-  { productA: 'Running Shoes', productB: 'Sports Socks', support: 0.28, confidence: 0.65, lift: 1.9 },
-  { productA: 'Tablet', productB: 'Tablet Case', support: 0.33, confidence: 0.81, lift: 2.5 },
-  { productA: 'Headphones', productB: 'Headphone Stand', support: 0.22, confidence: 0.58, lift: 1.7 },
-  { productA: 'Gaming Console', productB: 'Extra Controller', support: 0.29, confidence: 0.74, lift: 2.4 },
-  { productA: 'Printer', productB: 'Ink Cartridge', support: 0.45, confidence: 0.92, lift: 3.5 },
-  { productA: 'Yoga Mat', productB: 'Yoga Blocks', support: 0.19, confidence: 0.54, lift: 1.6 },
-];
+import { useBasketSearch } from '@/hooks/useApiData';
 
 const MarketBasket: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<typeof associationRules>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
 
+  const { data, isLoading, isError, refetch } = useBasketSearch(searchQuery, hasSearched);
+
+  const searchResults = data?.rules || [];
+  const avgConfidence = data?.avg_confidence || 0;
+  const avgLift = data?.avg_lift || 0;
+
   const handleSearch = () => {
-    if (!searchTerm.trim()) {
-      setSearchResults(associationRules);
-    } else {
-      const filtered = associationRules.filter(
-        rule => 
-          rule.productA.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          rule.productB.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setSearchResults(filtered);
-    }
+    setSearchQuery(searchTerm);
     setHasSearched(true);
+    if (hasSearched) {
+      refetch();
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -52,7 +40,7 @@ const MarketBasket: React.FC = () => {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground">Market Basket Analysis</h1>
-        <p className="text-muted-foreground mt-1">Discover products frequently purchased together</p>
+        <p className="text-muted-foreground mt-1">Discover products frequently purchased together using Association Rule Mining</p>
       </div>
 
       {/* Search Section */}
@@ -69,8 +57,12 @@ const MarketBasket: React.FC = () => {
               className="pl-10 h-12"
             />
           </div>
-          <Button onClick={handleSearch} size="lg" className="gap-2">
-            <Sparkles className="w-4 h-4" />
+          <Button onClick={handleSearch} size="lg" className="gap-2" disabled={isLoading}>
+            {isLoading ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4" />
+            )}
             Find Associations
           </Button>
         </div>
@@ -87,6 +79,12 @@ const MarketBasket: React.FC = () => {
         )}
       </div>
 
+      {isError && hasSearched && (
+        <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-destructive">
+          Failed to load basket analysis data. Using cached or mock data.
+        </div>
+      )}
+
       {/* Results */}
       {hasSearched && (
         <div className="space-y-6 animate-slide-in">
@@ -94,28 +92,30 @@ const MarketBasket: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="stat-card">
               <p className="text-sm text-muted-foreground">Rules Found</p>
-              <p className="text-2xl font-bold text-foreground">{searchResults.length}</p>
+              <p className="text-2xl font-bold text-foreground">
+                {isLoading ? '...' : searchResults.length}
+              </p>
             </div>
             <div className="stat-card">
               <p className="text-sm text-muted-foreground">Avg. Confidence</p>
               <p className="text-2xl font-bold text-foreground">
-                {searchResults.length > 0 
-                  ? (searchResults.reduce((sum, r) => sum + r.confidence, 0) / searchResults.length * 100).toFixed(1) 
-                  : 0}%
+                {isLoading ? '...' : `${(avgConfidence * 100).toFixed(1)}%`}
               </p>
             </div>
             <div className="stat-card">
               <p className="text-sm text-muted-foreground">Avg. Lift</p>
               <p className="text-2xl font-bold text-foreground">
-                {searchResults.length > 0 
-                  ? (searchResults.reduce((sum, r) => sum + r.lift, 0) / searchResults.length).toFixed(2)
-                  : 0}x
+                {isLoading ? '...' : `${avgLift.toFixed(2)}x`}
               </p>
             </div>
           </div>
 
           {/* Association Cards */}
-          {searchResults.length > 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <RefreshCw className="w-8 h-8 text-muted-foreground animate-spin" />
+            </div>
+          ) : searchResults.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {searchResults.map((rule, index) => (
                 <div 
@@ -152,12 +152,12 @@ const MarketBasket: React.FC = () => {
             </div>
           ) : (
             <div className="chart-container text-center py-12">
-              <p className="text-muted-foreground">No associations found for "{searchTerm}"</p>
+              <p className="text-muted-foreground">No associations found for "{searchQuery}"</p>
             </div>
           )}
 
           {/* Data Table */}
-          {searchResults.length > 0 && (
+          {!isLoading && searchResults.length > 0 && (
             <div className="chart-container overflow-x-auto">
               <h3 className="text-lg font-semibold text-foreground mb-4">Association Rules Table</h3>
               <table className="data-table">

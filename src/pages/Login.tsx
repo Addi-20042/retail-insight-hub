@@ -67,7 +67,7 @@ const Login: React.FC = () => {
               variant="google" 
               size="lg" 
               className="w-full"
-              onClick={login}
+              onClick={() => login()}
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path

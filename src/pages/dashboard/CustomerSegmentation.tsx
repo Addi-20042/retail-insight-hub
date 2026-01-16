@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, TrendingUp, ShoppingBag, DollarSign } from 'lucide-react';
+import { Users, TrendingUp, ShoppingBag, DollarSign, RefreshCw } from 'lucide-react';
 import {
   PieChart,
   Pie,
@@ -8,68 +8,40 @@ import {
   Tooltip,
   Legend
 } from 'recharts';
-
-const segmentData = [
-  { 
-    id: 0, 
-    name: 'Premium Buyers', 
-    count: 234, 
-    avgSpend: 458, 
-    totalRevenue: 107172,
-    color: 'hsl(168, 76%, 42%)',
-    description: 'High-value customers with frequent large purchases'
-  },
-  { 
-    id: 1, 
-    name: 'Regular Customers', 
-    count: 567, 
-    avgSpend: 125, 
-    totalRevenue: 70875,
-    color: 'hsl(199, 89%, 48%)',
-    description: 'Consistent buyers with moderate spending'
-  },
-  { 
-    id: 2, 
-    name: 'Occasional Shoppers', 
-    count: 892, 
-    avgSpend: 45, 
-    totalRevenue: 40140,
-    color: 'hsl(262, 83%, 58%)',
-    description: 'Infrequent buyers with low average spend'
-  },
-  { 
-    id: 3, 
-    name: 'New Customers', 
-    count: 345, 
-    avgSpend: 78, 
-    totalRevenue: 26910,
-    color: 'hsl(38, 92%, 50%)',
-    description: 'Recently acquired customers'
-  },
-];
-
-const productSegments = [
-  { product: 'Laptop Pro X1', quantity: 156, revenue: 155844, segment: 0 },
-  { product: 'Wireless Earbuds', quantity: 892, revenue: 44600, segment: 1 },
-  { product: 'Office Chair Deluxe', quantity: 234, revenue: 58266, segment: 0 },
-  { product: 'Desk Organizer Set', quantity: 567, revenue: 14175, segment: 2 },
-  { product: 'Smart Watch Series 5', quantity: 345, revenue: 103155, segment: 0 },
-  { product: 'USB-C Hub', quantity: 678, revenue: 27120, segment: 1 },
-  { product: 'Notebook Pack (12)', quantity: 1234, revenue: 12340, segment: 2 },
-  { product: 'Monitor Stand Pro', quantity: 189, revenue: 17010, segment: 1 },
-];
+import { Button } from '@/components/ui/button';
+import { useSegmentation } from '@/hooks/useApiData';
 
 const CustomerSegmentation: React.FC = () => {
-  const totalCustomers = segmentData.reduce((sum, s) => sum + s.count, 0);
-  const totalRevenue = segmentData.reduce((sum, s) => sum + s.totalRevenue, 0);
+  const { data, isLoading, isError, refetch } = useSegmentation();
+
+  const segmentData = data?.segments || [];
+  const productSegments = data?.products || [];
+  const totalCustomers = data?.total_customers || 0;
+  const totalRevenue = data?.total_revenue || 0;
 
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Customer Segmentation</h1>
-        <p className="text-muted-foreground mt-1">K-Means clustering analysis of customer buying patterns</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Customer Segmentation</h1>
+          <p className="text-muted-foreground mt-1">K-Means clustering analysis of customer buying patterns</p>
+        </div>
+        <Button 
+          variant="outline" 
+          size="icon"
+          onClick={() => refetch()}
+          disabled={isLoading}
+        >
+          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+        </Button>
       </div>
+
+      {isError && (
+        <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-destructive">
+          Failed to load segmentation data. Using cached or mock data.
+        </div>
+      )}
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -80,7 +52,9 @@ const CustomerSegmentation: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Customers</p>
-              <p className="text-xl font-bold text-foreground">{totalCustomers.toLocaleString()}</p>
+              <p className="text-xl font-bold text-foreground">
+                {isLoading ? '...' : totalCustomers.toLocaleString()}
+              </p>
             </div>
           </div>
         </div>
@@ -91,7 +65,9 @@ const CustomerSegmentation: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Revenue</p>
-              <p className="text-xl font-bold text-foreground">${totalRevenue.toLocaleString()}</p>
+              <p className="text-xl font-bold text-foreground">
+                {isLoading ? '...' : `$${totalRevenue.toLocaleString()}`}
+              </p>
             </div>
           </div>
         </div>
@@ -102,7 +78,9 @@ const CustomerSegmentation: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Segments Found</p>
-              <p className="text-xl font-bold text-foreground">{segmentData.length}</p>
+              <p className="text-xl font-bold text-foreground">
+                {isLoading ? '...' : segmentData.length}
+              </p>
             </div>
           </div>
         </div>
@@ -113,7 +91,9 @@ const CustomerSegmentation: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Avg. Spend</p>
-              <p className="text-xl font-bold text-foreground">${Math.round(totalRevenue / totalCustomers)}</p>
+              <p className="text-xl font-bold text-foreground">
+                {isLoading ? '...' : `$${totalCustomers > 0 ? Math.round(totalRevenue / totalCustomers) : 0}`}
+              </p>
             </div>
           </div>
         </div>
@@ -124,71 +104,83 @@ const CustomerSegmentation: React.FC = () => {
         {/* Pie Chart */}
         <div className="chart-container">
           <h3 className="text-lg font-semibold text-foreground mb-4">Customer Distribution</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={segmentData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={4}
-                dataKey="count"
-                nameKey="name"
-              >
-                {segmentData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))', 
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px'
-                }}
-                formatter={(value: number) => [`${value} customers`, '']}
-              />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+          {isLoading ? (
+            <div className="h-[300px] flex items-center justify-center">
+              <RefreshCw className="w-8 h-8 text-muted-foreground animate-spin" />
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={segmentData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={4}
+                  dataKey="count"
+                  nameKey="name"
+                >
+                  {segmentData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                  formatter={(value: number) => [`${value} customers`, '']}
+                />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         {/* Segment Cards */}
         <div className="space-y-4">
-          {segmentData.map((segment) => (
-            <div 
-              key={segment.id} 
-              className="bg-card rounded-xl p-4 border border-border/50 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start gap-4">
-                <div 
-                  className="w-3 h-12 rounded-full"
-                  style={{ backgroundColor: segment.color }}
-                />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-semibold text-foreground">{segment.name}</h4>
-                    <span className="text-sm text-muted-foreground">Segment {segment.id}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">{segment.description}</p>
-                  <div className="flex gap-6 mt-3">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Customers</p>
-                      <p className="font-semibold text-foreground">{segment.count}</p>
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <RefreshCw className="w-8 h-8 text-muted-foreground animate-spin" />
+            </div>
+          ) : (
+            segmentData.map((segment) => (
+              <div 
+                key={segment.id} 
+                className="bg-card rounded-xl p-4 border border-border/50 hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-start gap-4">
+                  <div 
+                    className="w-3 h-12 rounded-full"
+                    style={{ backgroundColor: segment.color }}
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold text-foreground">{segment.name}</h4>
+                      <span className="text-sm text-muted-foreground">Segment {segment.id}</span>
                     </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Avg. Spend</p>
-                      <p className="font-semibold text-foreground">${segment.avgSpend}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Total Revenue</p>
-                      <p className="font-semibold text-foreground">${segment.totalRevenue.toLocaleString()}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{segment.description}</p>
+                    <div className="flex gap-6 mt-3">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Customers</p>
+                        <p className="font-semibold text-foreground">{segment.count}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Avg. Spend</p>
+                        <p className="font-semibold text-foreground">${segment.avgSpend}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Total Revenue</p>
+                        <p className="font-semibold text-foreground">${segment.totalRevenue.toLocaleString()}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
@@ -205,24 +197,32 @@ const CustomerSegmentation: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {productSegments.map((row, index) => (
-              <tr key={index}>
-                <td className="font-medium">{row.product}</td>
-                <td>{row.quantity.toLocaleString()}</td>
-                <td className="text-primary font-semibold">${row.revenue.toLocaleString()}</td>
-                <td>
-                  <span 
-                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                    style={{ 
-                      backgroundColor: `${segmentData[row.segment].color}20`,
-                      color: segmentData[row.segment].color
-                    }}
-                  >
-                    {segmentData[row.segment].name}
-                  </span>
-                </td>
+            {isLoading ? (
+              <tr>
+                <td colSpan={4} className="text-center py-8">Loading segmentation data...</td>
               </tr>
-            ))}
+            ) : (
+              productSegments.map((row, index) => (
+                <tr key={index}>
+                  <td className="font-medium">{row.product}</td>
+                  <td>{row.quantity.toLocaleString()}</td>
+                  <td className="text-primary font-semibold">${row.revenue.toLocaleString()}</td>
+                  <td>
+                    {segmentData[row.segment] && (
+                      <span 
+                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                        style={{ 
+                          backgroundColor: `${segmentData[row.segment].color}20`,
+                          color: segmentData[row.segment].color
+                        }}
+                      >
+                        {segmentData[row.segment].name}
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
