@@ -1,0 +1,25 @@
+# Flask Backend Requirements for RetailMind
+
+# Web Framework
+Flask==3.0.0
+Flask-CORS==4.0.0
+
+# Authentication
+PyJWT==2.8.0
+google-auth==2.25.2
+google-auth-oauthlib==1.2.0
+
+# Data Processing
+pandas==2.1.4
+numpy==1.26.2
+
+# Machine Learning
+scikit-learn==1.3.2
+joblib==1.3.2
+
+# Database
+# SQLite is built-in, no package needed
+
+# Utilities
+python-dotenv==1.0.0
+Werkzeug==3.0.1
