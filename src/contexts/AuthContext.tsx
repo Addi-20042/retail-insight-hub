@@ -2,12 +2,19 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { authService, getToken, removeToken, setToken } from '@/lib/api';
 import type { User } from '@/lib/api';
 
+interface GoogleUserInfo {
+  sub?: string;
+  email?: string;
+  name?: string;
+  picture?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   backendConnected: boolean;
-  login: (googleIdToken?: string) => Promise<void>;
+  login: (accessToken?: string, googleUser?: GoogleUserInfo) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -25,22 +32,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (token) {
         try {
-          // Try to verify token with backend
           const verifiedUser = await authService.verifyToken();
           if (verifiedUser) {
             setUser(verifiedUser);
             setBackendConnected(true);
           }
         } catch {
-          // Token invalid or backend unavailable
-          // Check localStorage for mock user
           const storedUser = localStorage.getItem('retailmind_user');
           if (storedUser) {
             setUser(JSON.parse(storedUser));
           }
         }
       } else {
-        // No token, check for mock user
         const storedUser = localStorage.getItem('retailmind_user');
         if (storedUser) {
           setUser(JSON.parse(storedUser));
@@ -53,19 +56,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuth();
   }, []);
 
-  const login = useCallback(async (googleIdToken?: string) => {
+  const login = useCallback(async (accessToken?: string, googleUser?: GoogleUserInfo) => {
     setIsLoading(true);
     
     try {
-      if (googleIdToken) {
-        // Real Google OAuth flow
-        const response = await authService.googleLogin(googleIdToken);
-        setUser(response.user);
-        localStorage.setItem('retailmind_user', JSON.stringify(response.user));
-        setBackendConnected(true);
+      if (accessToken && googleUser) {
+        // Real Google OAuth flow - try backend first
+        try {
+          const response = await authService.googleLogin(accessToken);
+          setUser(response.user);
+          localStorage.setItem('retailmind_user', JSON.stringify(response.user));
+          setBackendConnected(true);
+        } catch {
+          // Backend unavailable, use Google user info directly
+          const mockUser: User = {
+            id: googleUser.sub || '1',
+            name: googleUser.name || 'Google User',
+            email: googleUser.email || 'user@gmail.com',
+            avatar: googleUser.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${googleUser.email}`,
+          };
+          
+          setToken('google_token_' + Date.now());
+          setUser(mockUser);
+          localStorage.setItem('retailmind_user', JSON.stringify(mockUser));
+          setBackendConnected(false);
+        }
       } else {
-        // Demo mode - mock login when backend unavailable
-        console.warn('Backend unavailable, using demo login');
+        // Demo mode - mock login
         const mockUser: User = {
           id: '1',
           name: 'John Smith',
@@ -73,7 +90,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
         };
         
-        // Store mock token for API calls
         setToken('demo_token_' + Date.now());
         setUser(mockUser);
         localStorage.setItem('retailmind_user', JSON.stringify(mockUser));
@@ -103,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await authService.logout();
     } catch {
-      // Backend might be unavailable, still proceed with local logout
+      // Backend might be unavailable
     }
     
     removeToken();
@@ -113,16 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        user, 
-        isAuthenticated: !!user, 
-        isLoading, 
-        backendConnected,
-        login, 
-        logout 
-      }}
-    >
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, backendConnected, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
