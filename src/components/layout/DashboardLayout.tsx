@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import Sidebar from './Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const DashboardLayout: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -42,16 +43,19 @@ const DashboardLayout: React.FC = () => {
             <span className="font-semibold text-foreground">RetailMind</span>
           </div>
           
-          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="w-5 h-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-64">
-              <Sidebar onNavigate={() => setMobileOpen(false)} />
-            </SheetContent>
-          </Sheet>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="w-5 h-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-64">
+                <Sidebar onNavigate={() => setMobileOpen(false)} />
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
 

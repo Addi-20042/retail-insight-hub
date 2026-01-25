@@ -6,11 +6,14 @@ import {
   Info, 
   Bell,
   Clock,
-  RefreshCw
+  RefreshCw,
+  Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAlerts } from '@/hooks/useApiData';
 import type { Alert } from '@/lib/api';
+import { exportAlertsToPdf } from '@/lib/exportPdf';
+import { toast } from 'sonner';
 
 const getAlertIcon = (type: Alert['type']) => {
   switch (type) {
@@ -69,14 +72,32 @@ const Alerts: React.FC = () => {
           <h1 className="text-3xl font-bold text-foreground">Smart Alerts</h1>
           <p className="text-muted-foreground mt-1">AI-generated insights and anomaly detection from the Alerts Engine</p>
         </div>
-        <Button 
-          variant="outline" 
-          size="icon"
-          onClick={() => refetch()}
-          disabled={isLoading}
-        >
-          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => {
+              exportAlertsToPdf(alerts.map(a => ({ 
+                type: a.type, 
+                message: a.message, 
+                severity: a.severity, 
+                timestamp: a.timestamp 
+              })));
+              toast.success('PDF exported successfully');
+            }}
+            title="Export to PDF"
+          >
+            <Download className="w-4 h-4" />
+          </Button>
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => refetch()}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
       </div>
 
       {isError && (

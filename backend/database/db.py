@@ -18,20 +18,23 @@ def init_db(db_path: str):
     global DATABASE_PATH
     DATABASE_PATH = db_path
     
-    # Ensure directory exists
     os.makedirs(os.path.dirname(db_path) if os.path.dirname(db_path) else '.', exist_ok=True)
     
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
-    # Create users table
+    # Create users table with multiple auth providers
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            google_id TEXT UNIQUE NOT NULL,
             email TEXT UNIQUE NOT NULL,
             name TEXT NOT NULL,
             avatar TEXT,
+            google_id TEXT UNIQUE,
+            github_id TEXT UNIQUE,
+            facebook_id TEXT UNIQUE,
+            password_hash TEXT,
+            password_salt TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
