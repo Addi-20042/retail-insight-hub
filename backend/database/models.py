@@ -38,22 +38,82 @@ class User:
         return dict(row) if row else None
     
     @staticmethod
+    def find_by_provider(provider: str, provider_id: str):
+        """Find user by social provider"""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(f'SELECT * FROM users WHERE {provider}_id = ?', (provider_id,))
+        row = cursor.fetchone()
+        conn.close()
+        return dict(row) if row else None
+    
+    @staticmethod
     def create(google_id: str, email: str, name: str, avatar: str = None):
-        """Create a new user"""
+        """Create a new user with Google auth"""
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute('''
             INSERT INTO users (google_id, email, name, avatar)
             VALUES (?, ?, ?, ?)
-        ''', (google_id, email, name, avatar))
+        ''', (google_id, email, name, avatar or f'https://api.dicebear.com/7.x/avataaars/svg?seed={name}'))
         user_id = cursor.lastrowid
         conn.commit()
         conn.close()
         
-        # Create default settings
         UserSettings.create(user_id)
-        
         return User.find_by_id(user_id)
+    
+    @staticmethod
+    def create_with_password(email: str, password_hash: str, password_salt: str, name: str):
+        """Create a new user with email/password auth"""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        avatar = f'https://api.dicebear.com/7.x/avataaars/svg?seed={name}'
+        cursor.execute('''
+            INSERT INTO users (email, name, avatar, password_hash, password_salt)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (email, name, avatar, password_hash, password_salt))
+        user_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        UserSettings.create(user_id)
+        return User.find_by_id(user_id)
+    
+    @staticmethod
+    def create_with_provider(provider: str, provider_id: str, email: str, name: str, avatar: str = None):
+        """Create a new user with social provider"""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        if provider == 'github':
+            cursor.execute('''
+                INSERT INTO users (github_id, email, name, avatar)
+                VALUES (?, ?, ?, ?)
+            ''', (provider_id, email, name, avatar))
+        elif provider == 'facebook':
+            cursor.execute('''
+                INSERT INTO users (facebook_id, email, name, avatar)
+                VALUES (?, ?, ?, ?)
+            ''', (provider_id, email, name, avatar))
+        
+        user_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        UserSettings.create(user_id)
+        return User.find_by_id(user_id)
+    
+    @staticmethod
+    def link_provider(user_id: int, provider: str, provider_id: str):
+        """Link social provider to existing user"""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(f'''
+            UPDATE users SET {provider}_id = ? WHERE id = ?
+        ''', (provider_id, user_id))
+        conn.commit()
+        conn.close()
     
     @staticmethod
     def update_last_login(user_id: int):

@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { 
-  LineChart, 
-  Line, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -10,7 +8,7 @@ import {
   Area,
   AreaChart
 } from 'recharts';
-import { Calendar, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
+import { Calendar, TrendingUp, TrendingDown, RefreshCw, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -20,6 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useForecast } from '@/hooks/useApiData';
+import { exportForecastToPdf } from '@/lib/exportPdf';
+import { toast } from 'sonner';
 
 const SalesForecast: React.FC = () => {
   const [forecastDays, setForecastDays] = useState('7');
@@ -39,6 +39,17 @@ const SalesForecast: React.FC = () => {
           <p className="text-muted-foreground mt-1">AI-powered demand prediction using regression models</p>
         </div>
         <div className="flex items-center gap-3">
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => {
+              exportForecastToPdf({ days: forecastDays, accuracy: '94.2%', total: `$${totalPredicted.toLocaleString()}` });
+              toast.success('PDF exported successfully');
+            }}
+            title="Export to PDF"
+          >
+            <Download className="w-4 h-4" />
+          </Button>
           <Button 
             variant="outline" 
             size="icon"

@@ -6,6 +6,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import BackendStatus from '@/components/BackendStatus';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Overview', end: true },
@@ -69,9 +70,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onNavigate }) => {
         })}
       </nav>
 
-      {/* Backend Status */}
-      <div className="px-4 py-2">
+      {/* Backend Status & Theme */}
+      <div className="px-4 py-2 flex items-center justify-between">
         <BackendStatus />
+        <ThemeToggle />
       </div>
 
       {/* User section */}
