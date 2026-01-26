@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
-import { Brain, BarChart3, Users, ShoppingCart, AlertTriangle, Mail, Eye, EyeOff } from 'lucide-react';
+import { Brain, BarChart3, Users, ShoppingCart, AlertTriangle, Mail, Eye, EyeOff, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { ForgotPasswordModal } from '@/components/ForgotPasswordModal';
 import { toast } from 'sonner';
 
 const Login: React.FC = () => {
@@ -15,8 +16,10 @@ const Login: React.FC = () => {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (response) => {
@@ -46,10 +49,20 @@ const Login: React.FC = () => {
       toast.error('Please fill in all fields');
       return;
     }
+
+    if (authMode === 'signup') {
+      if (password !== confirmPassword) {
+        toast.error('Passwords do not match');
+        return;
+      }
+      if (password.length < 8) {
+        toast.error('Password must be at least 8 characters');
+        return;
+      }
+    }
     
     setIsSubmitting(true);
     try {
-      // Simulate email auth - in production this would call the backend
       await new Promise(resolve => setTimeout(resolve, 1000));
       await login();
       toast.success(authMode === 'login' ? 'Welcome back!' : 'Account created!');
@@ -69,7 +82,6 @@ const Login: React.FC = () => {
         toast.info('Demo mode activated');
       }
     } else {
-      // Demo mode for other providers
       login();
       toast.info(`${provider} login - Demo mode`);
     }
@@ -119,7 +131,6 @@ const Login: React.FC = () => {
 
       {/* Right side - Login */}
       <div className="flex-1 flex items-center justify-center p-6 sm:p-8 relative">
-        {/* Theme toggle */}
         <div className="absolute top-4 right-4">
           <ThemeToggle />
         </div>
@@ -147,7 +158,7 @@ const Login: React.FC = () => {
             {/* Social Login Buttons */}
             <div className="space-y-3">
               <Button 
-                variant="google" 
+                variant="outline" 
                 size="lg" 
                 className="w-full"
                 onClick={() => handleSocialLogin('google')}
@@ -211,14 +222,27 @@ const Login: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  {authMode === 'login' && (
+                    <button
+                      type="button"
+                      onClick={() => setForgotPasswordOpen(true)}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
                 <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10 pr-10"
                   />
                   <Button
                     type="button"
@@ -231,6 +255,26 @@ const Login: React.FC = () => {
                   </Button>
                 </div>
               </div>
+
+              {authMode === 'signup' && (
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="confirmPassword"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Must be at least 8 characters with uppercase, lowercase, and number
+                  </p>
+                </div>
+              )}
 
               <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
                 {isSubmitting ? (
@@ -263,6 +307,13 @@ const Login: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal 
+        open={forgotPasswordOpen} 
+        onOpenChange={setForgotPasswordOpen}
+        onBackToLogin={() => setForgotPasswordOpen(false)}
+      />
     </div>
   );
 };
