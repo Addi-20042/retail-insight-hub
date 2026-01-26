@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import Login from "./pages/Login";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import Overview from "./pages/dashboard/Overview";
@@ -27,26 +28,28 @@ const App = () => (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Navigate to="/login" replace />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/dashboard" element={<DashboardLayout />}>
-                  <Route index element={<Overview />} />
-                  <Route path="forecast" element={<SalesForecast />} />
-                  <Route path="segmentation" element={<CustomerSegmentation />} />
-                  <Route path="basket" element={<MarketBasket />} />
-                  <Route path="alerts" element={<Alerts />} />
-                  <Route path="upload" element={<DataUpload />} />
-                  <Route path="settings" element={<Settings />} />
-                </Route>
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
+          <NotificationProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Navigate to="/login" replace />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/dashboard" element={<DashboardLayout />}>
+                    <Route index element={<Overview />} />
+                    <Route path="forecast" element={<SalesForecast />} />
+                    <Route path="segmentation" element={<CustomerSegmentation />} />
+                    <Route path="basket" element={<MarketBasket />} />
+                    <Route path="alerts" element={<Alerts />} />
+                    <Route path="upload" element={<DataUpload />} />
+                    <Route path="settings" element={<Settings />} />
+                  </Route>
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </NotificationProvider>
         </AuthProvider>
       </QueryClientProvider>
     </GoogleOAuthProvider>

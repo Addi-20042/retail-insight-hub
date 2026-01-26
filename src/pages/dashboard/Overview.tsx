@@ -8,16 +8,17 @@ import {
   ArrowDownRight
 } from 'lucide-react';
 import { 
-  LineChart, 
-  Line, 
+  AreaChart,
+  Area,
+  Line,
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer,
-  AreaChart,
-  Area
+  ResponsiveContainer
 } from 'recharts';
+import { QuickActions } from '@/components/QuickActions';
+import { ActivityFeed } from '@/components/ActivityFeed';
 
 const stats = [
   { 
@@ -75,15 +76,15 @@ const recentAlerts = [
 
 const Overview: React.FC = () => {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard Overview</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Dashboard Overview</h1>
         <p className="text-muted-foreground mt-1">Monitor your retail analytics at a glance</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {stats.map((stat, index) => (
           <div 
             key={index} 
@@ -91,34 +92,37 @@ const Overview: React.FC = () => {
             style={{ animationDelay: `${index * 50}ms` }}
           >
             <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-                <p className="text-2xl font-bold text-foreground mt-1">{stat.value}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">{stat.label}</p>
+                <p className="text-lg sm:text-2xl font-bold text-foreground mt-1">{stat.value}</p>
               </div>
-              <div className={`w-10 h-10 rounded-lg bg-${stat.color}/10 flex items-center justify-center`}>
-                <stat.icon className={`w-5 h-5 text-${stat.color}`} />
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-${stat.color}/10 flex items-center justify-center shrink-0`}>
+                <stat.icon className={`w-4 h-4 sm:w-5 sm:h-5 text-${stat.color}`} />
               </div>
             </div>
-            <div className="mt-4 flex items-center gap-1">
+            <div className="mt-3 sm:mt-4 flex items-center gap-1">
               {stat.trend === 'up' ? (
-                <ArrowUpRight className="w-4 h-4 text-success" />
+                <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-success" />
               ) : (
-                <ArrowDownRight className="w-4 h-4 text-destructive" />
+                <ArrowDownRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-destructive" />
               )}
-              <span className={stat.trend === 'up' ? 'text-success text-sm font-medium' : 'text-destructive text-sm font-medium'}>
+              <span className={stat.trend === 'up' ? 'text-success text-xs sm:text-sm font-medium' : 'text-destructive text-xs sm:text-sm font-medium'}>
                 {stat.change}
               </span>
-              <span className="text-muted-foreground text-sm ml-1">vs last month</span>
+              <span className="text-muted-foreground text-xs sm:text-sm ml-1 hidden sm:inline">vs last month</span>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Quick Actions */}
+      <QuickActions />
+
+      {/* Charts & Activity Section */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Revenue Chart */}
-        <div className="lg:col-span-2 chart-container">
-          <div className="flex items-center justify-between mb-6">
+        <div className="xl:col-span-2 chart-container">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2">
             <div>
               <h3 className="text-lg font-semibold text-foreground">Revenue Trend</h3>
               <p className="text-sm text-muted-foreground">Actual vs Forecast</p>
@@ -134,7 +138,7 @@ const Overview: React.FC = () => {
               </div>
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={280}>
             <AreaChart data={revenueData}>
               <defs>
                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -172,30 +176,35 @@ const Overview: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* Recent Alerts */}
-        <div className="chart-container">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Recent Alerts</h3>
-          <div className="space-y-3">
-            {recentAlerts.map((alert) => (
-              <div 
-                key={alert.id} 
-                className={`p-3 rounded-lg border ${
-                  alert.severity === 'success' ? 'bg-success/5 border-success/20' :
-                  alert.severity === 'warning' ? 'bg-warning/5 border-warning/20' :
-                  'bg-chart-secondary/5 border-chart-secondary/20'
-                }`}
-              >
-                <p className="text-sm text-foreground">{alert.message}</p>
-              </div>
-            ))}
-          </div>
+        {/* Activity Feed */}
+        <ActivityFeed />
+      </div>
+
+      {/* Recent Alerts */}
+      <div className="chart-container">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-foreground">Recent Alerts</h3>
           <a 
             href="/dashboard/alerts" 
-            className="mt-4 inline-flex items-center text-sm text-primary hover:underline"
+            className="text-sm text-primary hover:underline flex items-center gap-1"
           >
-            View all alerts
-            <ArrowUpRight className="w-4 h-4 ml-1" />
+            View all
+            <ArrowUpRight className="w-4 h-4" />
           </a>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {recentAlerts.map((alert) => (
+            <div 
+              key={alert.id} 
+              className={`p-4 rounded-lg border ${
+                alert.severity === 'success' ? 'bg-success/5 border-success/20' :
+                alert.severity === 'warning' ? 'bg-warning/5 border-warning/20' :
+                'bg-chart-secondary/5 border-chart-secondary/20'
+              }`}
+            >
+              <p className="text-sm text-foreground">{alert.message}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>

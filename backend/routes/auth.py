@@ -263,8 +263,64 @@ def request_password_reset():
     if not data or 'email' not in data:
         return jsonify({'error': 'Email is required'}), 400
     
+    email = data['email']
+    
+    if not validate_email(email):
+        return jsonify({'error': 'Invalid email format'}), 400
+    
+    # Find user
+    user = User.find_by_email(email)
+    
+    if user:
+        # Generate reset token (in production, store this securely)
+        import secrets
+        reset_token = secrets.token_urlsafe(32)
+        
+        # Store token with expiry (in production, save to database)
+        # User.save_reset_token(user['id'], reset_token, expires_in=3600)
+        
+        # In production, send actual email here
+        # send_password_reset_email(email, reset_token)
+        print(f"Password reset token for {email}: {reset_token}")
+    
     # Always return success to prevent email enumeration
-    # In production, send actual reset email here
     return jsonify({
         'message': 'If an account with that email exists, a password reset link has been sent.'
+    })
+
+
+@auth_bp.route('/password-reset/confirm', methods=['POST'])
+def confirm_password_reset():
+    """
+    Confirm password reset with token
+    
+    Request body:
+        { "token": "...", "new_password": "..." }
+        
+    Returns:
+        { "message": "Password updated successfully" }
+    """
+    data = request.get_json()
+    
+    if not data or 'token' not in data or 'new_password' not in data:
+        return jsonify({'error': 'Token and new password are required'}), 400
+    
+    # In production, verify token and update password
+    # user = User.find_by_reset_token(data['token'])
+    # if not user or token_expired:
+    #     return jsonify({'error': 'Invalid or expired reset token'}), 400
+    
+    # Validate new password
+    from auth.email_auth import validate_password, hash_password
+    is_valid, error = validate_password(data['new_password'])
+    if not is_valid:
+        return jsonify({'error': error}), 400
+    
+    # In production, update password
+    # hashed, salt = hash_password(data['new_password'])
+    # User.update_password(user['id'], hashed, salt)
+    # User.clear_reset_token(user['id'])
+    
+    return jsonify({
+        'message': 'Password has been reset successfully. You can now log in with your new password.'
     })
