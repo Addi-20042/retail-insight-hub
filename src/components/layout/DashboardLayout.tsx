@@ -10,6 +10,7 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { QuickNotes } from '@/components/QuickNotes';
 import { CommandPalette } from '@/components/CommandPalette';
 import { KeyboardShortcuts, useKeyboardShortcuts } from '@/components/KeyboardShortcuts';
+import AIChatAssistant from '@/components/AIChatAssistant';
 
 const DashboardLayout: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -134,6 +135,9 @@ const DashboardLayout: React.FC = () => {
       
       {/* Keyboard Shortcuts Dialog */}
       <KeyboardShortcuts open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+
+      {/* AI Chat Assistant */}
+      <AIChatAssistant />
     </div>
   );
 };

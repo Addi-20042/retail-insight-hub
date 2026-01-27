@@ -16,6 +16,7 @@ import MarketBasket from "./pages/dashboard/MarketBasket";
 import Alerts from "./pages/dashboard/Alerts";
 import DataUpload from "./pages/dashboard/DataUpload";
 import Settings from "./pages/dashboard/Settings";
+import Goals from "./pages/dashboard/Goals";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
                     <Route path="segmentation" element={<CustomerSegmentation />} />
                     <Route path="basket" element={<MarketBasket />} />
                     <Route path="alerts" element={<Alerts />} />
+                    <Route path="goals" element={<Goals />} />
                     <Route path="upload" element={<DataUpload />} />
                     <Route path="settings" element={<Settings />} />
                   </Route>
