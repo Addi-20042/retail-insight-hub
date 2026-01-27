@@ -1,73 +1,259 @@
-# Welcome to your Lovable project
+# RetailMind - AI-Powered Retail Analytics Platform
 
-## Project info
+RetailMind is a comprehensive retail analytics web application that leverages machine learning and AI to provide actionable insights for retail businesses. It combines powerful data analysis with an intuitive interface to help businesses make data-driven decisions.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 🌟 Features
 
-## How can I edit this code?
+### Core Analytics
+- **Sales Forecasting** - Linear regression-based demand prediction with interactive visualizations
+- **Customer Segmentation** - K-Means clustering to identify customer groups and behaviors
+- **Market Basket Analysis** - Association rule mining to discover product relationships
+- **Smart Alerts** - Automated anomaly detection for demand spikes and inventory issues
 
-There are several ways of editing your application.
+### AI Assistant
+- **RetailMind AI** - Gemini-powered chat assistant for real-time analytics guidance
+- Natural language queries about your retail data
+- Contextual help and recommendations
 
-**Use Lovable**
+### Productivity Tools
+- **Command Palette** (⌘K) - Quick navigation and actions
+- **Quick Notes** - Persistent note-taking with local storage
+- **Keyboard Shortcuts** - Efficient navigation throughout the app
+- **Real-time Notifications** - Live alerts for anomalies and insights
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+### Goals & Gamification
+- **Goal Tracking** - Set and monitor analytics goals
+- **Achievements** - Unlock badges as you explore features
+- **Progress Tracking** - Visual progress indicators
 
-Changes made via Lovable will be committed automatically to this repo.
+### Reporting & Automation
+- **PDF Export** - Branded analytics reports using jsPDF
+- **Scheduled Reports** - Automated email delivery of reports
+- **Data Export** - Export your data in multiple formats
 
-**Use your preferred IDE**
+### Authentication & Security
+- **Multi-Provider Auth** - Google, GitHub, Facebook, and Email/Password
+- **Two-Factor Authentication** - Enhanced account security (UI ready)
+- **Session Management** - Track and manage active sessions
+- **Password Reset** - Complete password recovery flow
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🛠️ Tech Stack
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Frontend
+| Technology | Purpose |
+|------------|---------|
+| React 18 | UI framework |
+| TypeScript | Type-safe development |
+| Vite | Build tool and dev server |
+| Tailwind CSS | Utility-first styling |
+| shadcn/ui | Component library |
+| React Router | Client-side routing |
+| TanStack Query | Data fetching and caching |
+| Recharts | Data visualization |
+| Framer Motion | Animations |
+| Lucide React | Icon library |
+| jsPDF + AutoTable | PDF generation |
+| react-markdown | Markdown rendering |
 
-Follow these steps:
+### Backend (Flask)
+| Technology | Purpose |
+|------------|---------|
+| Python 3.11+ | Programming language |
+| Flask 3.0 | Web framework |
+| Flask-CORS | Cross-origin support |
+| Pandas | Data manipulation |
+| NumPy | Numerical computing |
+| Scikit-learn | Machine learning |
+| PyJWT | JWT authentication |
+| SQLite | Local database |
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Cloud Services (Lovable Cloud)
+| Service | Purpose |
+|---------|---------|
+| PostgreSQL | Production database |
+| Edge Functions | Serverless backend logic |
+| Authentication | User management |
+| Real-time | Live notifications |
+| Lovable AI Gateway | Gemini AI integration |
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 📁 Project Structure
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+retailmind/
+├── src/                          # Frontend source code
+│   ├── components/               # React components
+│   │   ├── ui/                   # shadcn/ui components
+│   │   ├── layout/               # Layout components
+│   │   ├── AIChatAssistant.tsx   # AI chat interface
+│   │   ├── GoalsAchievements.tsx # Gamification
+│   │   └── ScheduledReports.tsx  # Report automation
+│   ├── contexts/                 # React contexts
+│   │   ├── AuthContext.tsx       # Authentication state
+│   │   ├── ThemeContext.tsx      # Theme management
+│   │   └── NotificationContext.tsx # Notifications
+│   ├── pages/                    # Page components
+│   │   ├── dashboard/            # Dashboard pages
+│   │   └── Login.tsx             # Authentication
+│   ├── hooks/                    # Custom React hooks
+│   ├── lib/                      # Utilities and API clients
+│   └── integrations/             # External integrations
+├── backend/                      # Flask backend
+│   ├── routes/                   # API endpoints
+│   ├── services/                 # Business logic
+│   ├── auth/                     # Authentication
+│   └── database/                 # Database models
+├── supabase/                     # Lovable Cloud config
+│   ├── functions/                # Edge functions
+│   │   └── ai-chat/              # AI assistant endpoint
+│   └── config.toml               # Supabase configuration
+└── public/                       # Static assets
 ```
 
-**Edit a file directly in GitHub**
+## 🚀 Getting Started
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Prerequisites
+- Node.js 18+ and npm
+- Python 3.11+ (for Flask backend)
 
-**Use GitHub Codespaces**
+### Frontend Setup
+```bash
+# Install dependencies
+npm install
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# Start development server
+npm run dev
 
-## What technologies are used for this project?
+# Build for production
+npm run build
+```
 
-This project is built with:
+### Backend Setup (Optional - for local ML processing)
+```bash
+# Navigate to backend
+cd backend
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-## How can I deploy this project?
+# Install dependencies
+pip install -r requirements.txt
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+# Run Flask server
+python app.py
+```
 
-## Can I connect a custom domain to my Lovable project?
+### Environment Variables
 
-Yes, you can!
+Create a `.env` file in the root directory:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```env
+# Optional: For Google OAuth
+VITE_GOOGLE_CLIENT_ID=your-google-client-id
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+# Auto-configured by Lovable Cloud
+VITE_SUPABASE_URL=https://xxx.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-key
+```
+
+## 📊 Database Schema
+
+The application uses the following main tables:
+
+| Table | Description |
+|-------|-------------|
+| `profiles` | User profile information |
+| `notifications` | Real-time notification storage |
+| `goals` | User-defined analytics goals |
+| `achievements` | Achievement definitions |
+| `user_achievements` | Earned achievements per user |
+| `scheduled_reports` | Automated report configurations |
+| `chat_messages` | AI chat conversation history |
+
+## 🔒 Security Features
+
+- Row Level Security (RLS) on all user tables
+- JWT-based authentication
+- Secure password hashing with salt
+- Session timeout configuration
+- CORS protection
+
+## 🎨 Theming
+
+RetailMind supports three themes:
+- **Light Mode** - Clean, bright interface
+- **Dark Mode** - Easy on the eyes
+- **System** - Follows OS preference
+
+Customize colors via CSS variables in `src/index.css`.
+
+## 📱 Responsive Design
+
+Fully responsive across all devices:
+- Desktop (1280px+)
+- Tablet (768px - 1279px)
+- Mobile (< 768px)
+
+Mobile-specific features:
+- Hamburger menu with slide-out sidebar
+- Touch-optimized interactions
+- Collapsible sections
+
+## 🤖 AI Integration
+
+The RetailMind AI assistant uses Google's Gemini 3 Flash model via Lovable AI Gateway:
+
+- Real-time streaming responses
+- Context-aware retail analytics guidance
+- Natural language data queries
+- Markdown-formatted responses
+
+## 📈 Analytics Modules
+
+### Sales Forecasting
+- Linear regression model
+- Time series visualization
+- Trend analysis
+- Demand prediction
+
+### Customer Segmentation
+- K-Means clustering
+- RFM analysis
+- Behavioral grouping
+- Marketing recommendations
+
+### Market Basket Analysis
+- Association rule mining
+- Cross-sell opportunities
+- Product affinity mapping
+- Bundle suggestions
+
+## 🔗 API Endpoints
+
+### Flask Backend
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/health` | GET | Health check |
+| `/api/auth/login` | POST | Email login |
+| `/api/auth/register` | POST | User registration |
+| `/api/forecast` | POST | Generate forecast |
+| `/api/segments` | POST | Customer segmentation |
+| `/api/basket` | POST | Basket analysis |
+| `/api/alerts` | GET | Get smart alerts |
+| `/api/upload` | POST | Upload CSV data |
+
+### Edge Functions
+| Function | Description |
+|----------|-------------|
+| `ai-chat` | AI assistant endpoint |
+
+## 📄 License
+
+MIT License - feel free to use this project for personal or commercial purposes.
+
+## 🙏 Acknowledgments
+
+- Built with [Lovable](https://lovable.dev)
+- UI components from [shadcn/ui](https://ui.shadcn.com)
+- Icons from [Lucide](https://lucide.dev)
+- AI powered by Google Gemini via Lovable AI

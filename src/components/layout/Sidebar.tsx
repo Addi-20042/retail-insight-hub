@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
-  BarChart3, Users, ShoppingCart, AlertTriangle, Upload, LogOut, LayoutDashboard, Brain, Settings
+  BarChart3, Users, ShoppingCart, AlertTriangle, Upload, LogOut, LayoutDashboard, Brain, Settings, Target
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -14,6 +14,7 @@ const navItems = [
   { path: '/dashboard/segmentation', icon: Users, label: 'Customer Segmentation' },
   { path: '/dashboard/basket', icon: ShoppingCart, label: 'Market Basket' },
   { path: '/dashboard/alerts', icon: AlertTriangle, label: 'Smart Alerts' },
+  { path: '/dashboard/goals', icon: Target, label: 'Goals & Achievements' },
   { path: '/dashboard/upload', icon: Upload, label: 'Data Upload' },
   { path: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ];
