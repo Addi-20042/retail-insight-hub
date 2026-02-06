@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ForgotPasswordModalProps {
   open: boolean;
@@ -37,13 +38,17 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     setIsSubmitting(true);
     
     try {
-      // Simulate API call - in production this would call backend
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) throw error;
       
       setIsSent(true);
       toast.success('Password reset email sent!');
-    } catch {
-      toast.error('Failed to send reset email. Please try again.');
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      toast.error(error.message || 'Failed to send reset email. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
