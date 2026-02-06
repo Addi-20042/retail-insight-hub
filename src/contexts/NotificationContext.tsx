@@ -96,25 +96,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     localStorage.removeItem('retailmind_notifications');
   }, []);
 
-  // Simulate real-time notifications every 30-60 seconds
-  useEffect(() => {
-    const scheduleNextNotification = () => {
-      const delay = 30000 + Math.random() * 30000; // 30-60 seconds
-      intervalRef.current = setTimeout(() => {
-        const alert = SIMULATED_ALERTS[Math.floor(Math.random() * SIMULATED_ALERTS.length)];
-        addNotification(alert);
-        scheduleNextNotification();
-      }, delay);
-    };
-
-    // Start after 15 seconds
-    const initialDelay = setTimeout(scheduleNextNotification, 15000);
-
-    return () => {
-      clearTimeout(initialDelay);
-      if (intervalRef.current) clearTimeout(intervalRef.current);
-    };
-  }, [addNotification]);
+  // Notifications are now triggered by real events (data from backend, user actions, etc.)
+  // No more simulated notifications - the addNotification function is available
+  // for components to call when real events occur
 
   const unreadCount = notifications.filter(n => !n.read).length;
 

@@ -1,7 +1,6 @@
 import React from 'react';
 import { Server, ServerOff } from 'lucide-react';
 import { useHealthCheck } from '@/hooks/useApiData';
-import { useAuth } from '@/contexts/AuthContext';
 import {
   Tooltip,
   TooltipContent,
@@ -11,9 +10,8 @@ import {
 
 const BackendStatus: React.FC = () => {
   const { data: health, isLoading } = useHealthCheck();
-  const { backendConnected } = useAuth();
   
-  const isConnected = health?.status === 'ok' || backendConnected;
+  const isConnected = health?.status === 'ok';
   
   if (isLoading) {
     return (
@@ -32,7 +30,7 @@ const BackendStatus: React.FC = () => {
             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-help ${
               isConnected 
                 ? 'bg-success/10 text-success' 
-                : 'bg-warning/10 text-warning'
+                : 'bg-muted/50 text-muted-foreground'
             }`}
           >
             {isConnected ? (
@@ -41,7 +39,7 @@ const BackendStatus: React.FC = () => {
               <ServerOff className="w-3.5 h-3.5" />
             )}
             <span className="text-xs font-medium">
-              {isConnected ? 'Backend Connected' : 'Demo Mode'}
+              {isConnected ? 'Backend Connected' : 'Backend Offline'}
             </span>
           </div>
         </TooltipTrigger>
@@ -59,9 +57,9 @@ const BackendStatus: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-1">
-              <p className="font-medium">Demo Mode Active</p>
+              <p className="font-medium">Backend Offline</p>
               <p className="text-xs text-muted-foreground">
-                Flask backend not detected. Using mock data.
+                Flask backend not detected.
               </p>
               <p className="text-xs text-muted-foreground">
                 Start Flask server at localhost:5000 to connect.

@@ -1,135 +1,74 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { authService, getToken, removeToken, setToken } from '@/lib/api';
-import type { User } from '@/lib/api';
+import { supabase } from '@/integrations/supabase/client';
+import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
-interface GoogleUserInfo {
-  sub?: string;
-  email?: string;
-  name?: string;
-  picture?: string;
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
 }
 
 interface AuthContextType {
   user: User | null;
+  session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  backendConnected: boolean;
-  login: (accessToken?: string, googleUser?: GoogleUserInfo) => Promise<void>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const mapSupabaseUser = (supabaseUser: SupabaseUser): User => ({
+  id: supabaseUser.id,
+  name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'User',
+  email: supabaseUser.email || '',
+  avatar: supabaseUser.user_metadata?.avatar_url || supabaseUser.user_metadata?.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${supabaseUser.email}`,
+});
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [backendConnected, setBackendConnected] = useState(false);
 
-  // Check for existing session on mount
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = getToken();
-      
-      if (token) {
-        try {
-          const verifiedUser = await authService.verifyToken();
-          if (verifiedUser) {
-            setUser(verifiedUser);
-            setBackendConnected(true);
-          }
-        } catch {
-          const storedUser = localStorage.getItem('retailmind_user');
-          if (storedUser) {
-            setUser(JSON.parse(storedUser));
-          }
-        }
-      } else {
-        const storedUser = localStorage.getItem('retailmind_user');
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-        }
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        setUser(mapSupabaseUser(session.user));
       }
-      
       setIsLoading(false);
-    };
+    });
 
-    checkAuth();
-  }, []);
-
-  const login = useCallback(async (accessToken?: string, googleUser?: GoogleUserInfo) => {
-    setIsLoading(true);
-    
-    try {
-      if (accessToken && googleUser) {
-        // Real Google OAuth flow - try backend first
-        try {
-          const response = await authService.googleLogin(accessToken);
-          setUser(response.user);
-          localStorage.setItem('retailmind_user', JSON.stringify(response.user));
-          setBackendConnected(true);
-        } catch {
-          // Backend unavailable, use Google user info directly
-          const mockUser: User = {
-            id: googleUser.sub || '1',
-            name: googleUser.name || 'Google User',
-            email: googleUser.email || 'user@gmail.com',
-            avatar: googleUser.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${googleUser.email}`,
-          };
-          
-          setToken('google_token_' + Date.now());
-          setUser(mockUser);
-          localStorage.setItem('retailmind_user', JSON.stringify(mockUser));
-          setBackendConnected(false);
-        }
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session?.user) {
+        setUser(mapSupabaseUser(session.user));
       } else {
-        // Demo mode - mock login
-        const mockUser: User = {
-          id: '1',
-          name: 'John Smith',
-          email: 'john.smith@retailmind.com',
-          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
-        };
-        
-        setToken('demo_token_' + Date.now());
-        setUser(mockUser);
-        localStorage.setItem('retailmind_user', JSON.stringify(mockUser));
-        setBackendConnected(false);
+        setUser(null);
       }
-    } catch (error) {
-      console.error('Login failed:', error);
-      
-      // Fallback to demo mode
-      const mockUser: User = {
-        id: '1',
-        name: 'Demo User',
-        email: 'demo@retailmind.com',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Demo',
-      };
-      
-      setToken('demo_token_' + Date.now());
-      setUser(mockUser);
-      localStorage.setItem('retailmind_user', JSON.stringify(mockUser));
-      setBackendConnected(false);
-    } finally {
       setIsLoading(false);
-    }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const logout = useCallback(async () => {
-    try {
-      await authService.logout();
-    } catch {
-      // Backend might be unavailable
-    }
-    
-    removeToken();
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem('retailmind_user');
-    setBackendConnected(false);
+    setSession(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, backendConnected, login, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      session,
+      isAuthenticated: !!session, 
+      isLoading, 
+      logout 
+    }}>
       {children}
     </AuthContext.Provider>
   );
