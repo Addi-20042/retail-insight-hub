@@ -47,6 +47,30 @@ export type Database = {
         }
         Relationships: []
       }
+      activity_log: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
@@ -185,6 +209,45 @@ export type Database = {
         }
         Relationships: []
       }
+      sales_data: {
+        Row: {
+          category: string | null
+          created_at: string
+          customer_id: string | null
+          date: string
+          id: string
+          product: string
+          quantity: number
+          revenue: number
+          transaction_id: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          customer_id?: string | null
+          date: string
+          id?: string
+          product: string
+          quantity?: number
+          revenue?: number
+          transaction_id?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          customer_id?: string | null
+          date?: string
+          id?: string
+          product?: string
+          quantity?: number
+          revenue?: number
+          transaction_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       scheduled_reports: {
         Row: {
           created_at: string
@@ -229,6 +292,33 @@ export type Database = {
           schedule?: string
           time_of_day?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      upload_history: {
+        Row: {
+          created_at: string
+          filename: string
+          id: string
+          rows_count: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          filename: string
+          id?: string
+          rows_count?: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          filename?: string
+          id?: string
+          rows_count?: number
+          status?: string
           user_id?: string
         }
         Relationships: []

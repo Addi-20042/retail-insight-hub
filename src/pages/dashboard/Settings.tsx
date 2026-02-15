@@ -69,10 +69,9 @@ const Settings: React.FC = () => {
     }
   };
 
+  // Sessions are managed by the authentication system
   const sessions = [
-    { device: 'Chrome on MacOS', location: 'New York, US', lastActive: 'Now', current: true },
-    { device: 'Safari on iPhone', location: 'New York, US', lastActive: '2 hours ago', current: false },
-    { device: 'Firefox on Windows', location: 'Boston, US', lastActive: '3 days ago', current: false },
+    { device: navigator.userAgent.includes('Chrome') ? 'Chrome' : navigator.userAgent.includes('Firefox') ? 'Firefox' : 'Browser', location: 'Current session', lastActive: 'Now', current: true },
   ];
 
   return (
