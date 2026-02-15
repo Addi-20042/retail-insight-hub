@@ -1,92 +1,64 @@
 import React, { useState, useRef } from 'react';
-import { Upload, FileSpreadsheet, Check, AlertCircle, RefreshCw, Trash2, CheckCircle } from 'lucide-react';
+import { Upload, FileSpreadsheet, Check, AlertCircle, RefreshCw, Trash2, CheckCircle, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useFileUpload } from '@/hooks/useApiData';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useUploadToSupabase, useAddSalesEntry, useUploadHistory } from '@/hooks/useSupabaseData';
 import { toast } from 'sonner';
-
-interface UploadedFile {
-  name: string;
-  size: string;
-  status: 'processing' | 'success' | 'error';
-  timestamp: Date;
-  rowsProcessed?: number;
-  modelsRetrained?: string[];
-}
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 const DataUpload: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualEntry, setManualEntry] = useState({ date: '', product: '', quantity: '', revenue: '', category: '' });
   
-  const uploadMutation = useFileUpload();
+  const uploadMutation = useUploadToSupabase();
+  const addEntryMutation = useAddSalesEntry();
+  const { data: uploadHistory, isLoading: historyLoading } = useUploadHistory();
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
+  const handleDragLeave = () => { setIsDragging(false); };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    const files = Array.from(e.dataTransfer.files);
-    processFiles(files);
+    processFiles(Array.from(e.dataTransfer.files));
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files ? Array.from(e.target.files) : [];
-    processFiles(files);
+    processFiles(e.target.files ? Array.from(e.target.files) : []);
   };
 
   const processFiles = async (files: File[]) => {
     const csvFiles = files.filter(f => f.name.endsWith('.csv'));
-    
-    if (csvFiles.length === 0) {
-      toast.error('Please upload CSV files only');
-      return;
-    }
+    if (csvFiles.length === 0) { toast.error('Please upload CSV files only'); return; }
 
     for (const file of csvFiles) {
-      const newFile: UploadedFile = {
-        name: file.name,
-        size: formatFileSize(file.size),
-        status: 'processing',
-        timestamp: new Date()
-      };
-
-      setUploadedFiles(prev => [newFile, ...prev]);
-
       try {
-        const response = await uploadMutation.mutateAsync(file);
-        
-        setUploadedFiles(prev => 
-          prev.map(f => 
-            f.name === file.name && f.status === 'processing'
-              ? { 
-                  ...f, 
-                  status: 'success' as const,
-                  rowsProcessed: response.rows_processed,
-                  modelsRetrained: response.models_retrained
-                }
-              : f
-          )
-        );
-        
-        toast.success(`${file.name} processed successfully! ${response.rows_processed} rows processed.`);
-      } catch (error) {
-        setUploadedFiles(prev => 
-          prev.map(f => 
-            f.name === file.name && f.status === 'processing'
-              ? { ...f, status: 'error' as const }
-              : f
-          )
-        );
-        
-        toast.error(`Failed to process ${file.name}`);
+        const result = await uploadMutation.mutateAsync(file);
+        toast.success(`${file.name} processed! ${result.rows_processed} rows added.`);
+      } catch (error: any) {
+        toast.error(`Failed: ${error.message || 'Unknown error'}`);
       }
+    }
+  };
+
+  const handleManualSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await addEntryMutation.mutateAsync({
+        date: manualEntry.date,
+        product: manualEntry.product,
+        quantity: parseInt(manualEntry.quantity) || 0,
+        revenue: parseFloat(manualEntry.revenue) || 0,
+        category: manualEntry.category || undefined,
+      });
+      toast.success('Entry added successfully');
+      setManualEntry({ date: '', product: '', quantity: '', revenue: '', category: '' });
+      setManualOpen(false);
+    } catch (error: any) {
+      toast.error(`Failed: ${error.message}`);
     }
   };
 
@@ -96,37 +68,60 @@ const DataUpload: React.FC = () => {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
-  const removeFile = (fileName: string) => {
-    setUploadedFiles(prev => prev.filter(f => f.name !== fileName));
-  };
-
-  const getStatusIcon = (status: UploadedFile['status']) => {
-    switch (status) {
-      case 'processing':
-        return <RefreshCw className="w-5 h-5 text-primary animate-spin" />;
-      case 'success':
-        return <Check className="w-5 h-5 text-success" />;
-      case 'error':
-        return <AlertCircle className="w-5 h-5 text-destructive" />;
-    }
-  };
-
-  const isProcessing = uploadedFiles.some(f => f.status === 'processing');
-
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Upload Sales Data</h1>
-        <p className="text-muted-foreground mt-1">Upload your CSV files to retrain ML models and update analytics</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Upload Sales Data</h1>
+          <p className="text-muted-foreground mt-1">Upload CSV files or manually enter sales data</p>
+        </div>
+        <Dialog open={manualOpen} onOpenChange={setManualOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <Plus className="w-4 h-4" />
+              Manual Entry
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Sales Entry</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleManualSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Date</Label>
+                <Input type="date" value={manualEntry.date} onChange={e => setManualEntry(p => ({ ...p, date: e.target.value }))} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Product</Label>
+                <Input value={manualEntry.product} onChange={e => setManualEntry(p => ({ ...p, product: e.target.value }))} required placeholder="Product name" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Quantity</Label>
+                  <Input type="number" value={manualEntry.quantity} onChange={e => setManualEntry(p => ({ ...p, quantity: e.target.value }))} required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Revenue ($)</Label>
+                  <Input type="number" step="0.01" value={manualEntry.revenue} onChange={e => setManualEntry(p => ({ ...p, revenue: e.target.value }))} required />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Category (optional)</Label>
+                <Input value={manualEntry.category} onChange={e => setManualEntry(p => ({ ...p, category: e.target.value }))} placeholder="e.g., Electronics" />
+              </div>
+              <Button type="submit" className="w-full" disabled={addEntryMutation.isPending}>
+                {addEntryMutation.isPending ? 'Adding...' : 'Add Entry'}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Upload Area */}
       <div
         className={`chart-container border-2 border-dashed transition-all duration-200 ${
-          isDragging 
-            ? 'border-primary bg-primary/5' 
-            : 'border-border hover:border-primary/50'
+          isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -141,139 +136,86 @@ const DataUpload: React.FC = () => {
           <h3 className="text-lg font-semibold text-foreground mt-4">
             {isDragging ? 'Drop your files here' : 'Drag and drop your CSV files'}
           </h3>
-          <p className="text-muted-foreground mt-2">
-            or click to browse from your computer
-          </p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            multiple
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-          <Button 
-            variant="outline" 
-            className="mt-4"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isProcessing}
-          >
-            <FileSpreadsheet className="w-4 h-4 mr-2" />
+          <p className="text-muted-foreground mt-2">or click to browse from your computer</p>
+          <input ref={fileInputRef} type="file" accept=".csv" multiple onChange={handleFileSelect} className="hidden" />
+          <Button variant="outline" className="mt-4" onClick={() => fileInputRef.current?.click()} disabled={uploadMutation.isPending}>
+            {uploadMutation.isPending ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 mr-2" />}
             Select CSV Files
           </Button>
-          <p className="text-xs text-muted-foreground mt-4">
-            Accepted format: .csv (comma-separated values)
-          </p>
+          <p className="text-xs text-muted-foreground mt-4">Accepted format: .csv (comma-separated values)</p>
         </div>
       </div>
 
       {/* Processing Status */}
-      {isProcessing && (
+      {uploadMutation.isPending && (
         <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-center gap-4">
           <RefreshCw className="w-6 h-6 text-primary animate-spin" />
           <div>
             <p className="font-medium text-foreground">Processing your data...</p>
-            <p className="text-sm text-muted-foreground">
-              Data is being cleaned and preprocessed. ML models (forecasting, segmentation, basket analysis) are being retrained.
-            </p>
+            <p className="text-sm text-muted-foreground">Parsing CSV and storing records in the database.</p>
           </div>
         </div>
       )}
 
-      {/* File Requirements */}
+      {/* CSV Format Requirements */}
       <div className="chart-container">
         <h3 className="text-lg font-semibold text-foreground mb-4">CSV Format Requirements</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <h4 className="font-medium text-foreground mb-2">Required Columns</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <code className="bg-muted px-1.5 py-0.5 rounded">date</code> - Transaction date (YYYY-MM-DD)
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <code className="bg-muted px-1.5 py-0.5 rounded">product</code> - Product name or ID
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <code className="bg-muted px-1.5 py-0.5 rounded">quantity</code> - Quantity sold
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <code className="bg-muted px-1.5 py-0.5 rounded">revenue</code> - Total revenue
-              </li>
+              {['date - Transaction date (YYYY-MM-DD)', 'product - Product name or ID', 'quantity - Quantity sold', 'revenue - Total revenue'].map(col => (
+                <li key={col} className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                  <code className="bg-muted px-1.5 py-0.5 rounded">{col.split(' - ')[0]}</code> - {col.split(' - ')[1]}
+                </li>
+              ))}
             </ul>
           </div>
           <div>
             <h4 className="font-medium text-foreground mb-2">Optional Columns</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
-                <code className="bg-muted px-1.5 py-0.5 rounded">category</code> - Product category
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
-                <code className="bg-muted px-1.5 py-0.5 rounded">customer_id</code> - Customer identifier
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
-                <code className="bg-muted px-1.5 py-0.5 rounded">transaction_id</code> - Transaction ID
-              </li>
+              {['category - Product category', 'customer_id - Customer identifier', 'transaction_id - Transaction ID'].map(col => (
+                <li key={col} className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
+                  <code className="bg-muted px-1.5 py-0.5 rounded">{col.split(' - ')[0]}</code> - {col.split(' - ')[1]}
+                </li>
+              ))}
             </ul>
           </div>
         </div>
       </div>
 
-      {/* Uploaded Files */}
-      {uploadedFiles.length > 0 && (
+      {/* Upload History */}
+      {uploadHistory && uploadHistory.length > 0 && (
         <div className="chart-container">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Uploaded Files</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">Upload History</h3>
           <div className="space-y-3">
-            {uploadedFiles.map((file, index) => (
-              <div 
-                key={`${file.name}-${index}`}
-                className="flex items-center justify-between p-4 bg-muted/50 rounded-lg"
-              >
+            {uploadHistory.map((upload) => (
+              <div key={upload.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                 <div className="flex items-center gap-4">
                   <FileSpreadsheet className="w-8 h-8 text-primary" />
                   <div>
-                    <p className="font-medium text-foreground">{file.name}</p>
+                    <p className="font-medium text-foreground">{upload.filename}</p>
                     <p className="text-sm text-muted-foreground">
-                      {file.size} • {file.timestamp.toLocaleTimeString()}
-                      {file.rowsProcessed && ` • ${file.rowsProcessed.toLocaleString()} rows`}
+                      {new Date(upload.created_at).toLocaleString()} • {upload.rows_count.toLocaleString()} rows
                     </p>
-                    {file.modelsRetrained && file.modelsRetrained.length > 0 && (
-                      <div className="flex items-center gap-1 mt-1">
-                        <CheckCircle className="w-3 h-3 text-success" />
-                        <span className="text-xs text-success">
-                          Retrained: {file.modelsRetrained.join(', ')}
-                        </span>
-                      </div>
-                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  {getStatusIcon(file.status)}
-                  <span className={`text-sm ${
-                    file.status === 'success' ? 'text-success' :
-                    file.status === 'error' ? 'text-destructive' :
-                    'text-primary'
-                  }`}>
-                    {file.status === 'success' ? 'Models Updated' :
-                     file.status === 'error' ? 'Failed' :
-                     'Processing...'}
-                  </span>
-                  {file.status !== 'processing' && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeFile(file.name)}
-                      className="text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                  {upload.status === 'success' ? (
+                    <CheckCircle className="w-5 h-5 text-success" />
+                  ) : upload.status === 'processing' ? (
+                    <RefreshCw className="w-5 h-5 text-primary animate-spin" />
+                  ) : (
+                    <AlertCircle className="w-5 h-5 text-destructive" />
                   )}
+                  <span className={`text-sm ${
+                    upload.status === 'success' ? 'text-success' :
+                    upload.status === 'processing' ? 'text-primary' : 'text-destructive'
+                  }`}>
+                    {upload.status === 'success' ? 'Completed' : upload.status === 'processing' ? 'Processing...' : 'Failed'}
+                  </span>
                 </div>
               </div>
             ))}
