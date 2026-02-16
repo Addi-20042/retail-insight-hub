@@ -22,10 +22,14 @@ class Config:
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key-change-in-production')
     JWT_EXPIRATION_HOURS = int(os.getenv('JWT_EXPIRATION_HOURS', '24'))
     
-    # Database settings
+    # Supabase settings (replaces local SQLite)
+    SUPABASE_URL = os.getenv('SUPABASE_URL', '')
+    SUPABASE_SERVICE_KEY = os.getenv('SUPABASE_SERVICE_KEY', '')
+    
+    # Legacy - kept for backward compatibility
     DATABASE_PATH = os.getenv('DATABASE_PATH', 'database/retailmind.db')
     
-    # Data paths
+    # Data paths (for model persistence)
     DATA_RAW_PATH = 'data/raw/'
     DATA_PROCESSED_PATH = 'data/processed/'
     MODELS_PATH = 'models/'

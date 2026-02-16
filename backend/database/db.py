@@ -1,71 +1,83 @@
 """
-Database initialization and connection management
-Uses SQLite for lightweight storage
+Supabase database client
+Replaces SQLite with Supabase for all data operations
 """
-import sqlite3
 import os
+from supabase import create_client, Client
+from config import get_config
 
-DATABASE_PATH = None
+_supabase_client: Client = None
 
-def get_db_connection():
-    """Get a database connection"""
-    conn = sqlite3.connect(DATABASE_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+def get_supabase() -> Client:
+    """Get Supabase client instance (singleton)"""
+    global _supabase_client
+    if _supabase_client is None:
+        config = get_config()
+        url = config.SUPABASE_URL
+        key = config.SUPABASE_SERVICE_KEY
+        
+        if not url or not key:
+            raise RuntimeError(
+                "SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in environment. "
+                "Get these from your Lovable Cloud project settings."
+            )
+        
+        _supabase_client = create_client(url, key)
+    
+    return _supabase_client
 
-def init_db(db_path: str):
-    """Initialize the database with required tables"""
-    global DATABASE_PATH
-    DATABASE_PATH = db_path
+
+def init_db(db_path: str = None):
+    """Initialize database connection (now uses Supabase)"""
+    try:
+        client = get_supabase()
+        # Test connection
+        result = client.table('sales_data').select('id').limit(1).execute()
+        print("✅ Connected to Supabase database")
+    except Exception as e:
+        print(f"⚠️ Supabase connection warning: {e}")
+        print("  Backend will still start but database operations may fail.")
+        print("  Set SUPABASE_URL and SUPABASE_SERVICE_KEY in your .env file.")
+
+
+def get_sales_data(user_id: str = None):
+    """
+    Fetch sales data from Supabase
     
-    os.makedirs(os.path.dirname(db_path) if os.path.dirname(db_path) else '.', exist_ok=True)
+    Args:
+        user_id: Optional user ID to filter by
+        
+    Returns:
+        list: Sales data records
+    """
+    client = get_supabase()
+    query = client.table('sales_data').select('*').order('date', desc=False)
     
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
+    if user_id:
+        query = query.eq('user_id', user_id)
     
-    # Create users table with multiple auth providers
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT UNIQUE NOT NULL,
-            name TEXT NOT NULL,
-            avatar TEXT,
-            google_id TEXT UNIQUE,
-            github_id TEXT UNIQUE,
-            facebook_id TEXT UNIQUE,
-            password_hash TEXT,
-            password_salt TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
+    result = query.execute()
+    return result.data or []
+
+
+def get_sales_dataframe(user_id: str = None):
+    """
+    Get sales data as a pandas DataFrame
     
-    # Create user_settings table
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS user_settings (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER UNIQUE NOT NULL,
-            theme TEXT DEFAULT 'dark',
-            notifications_enabled BOOLEAN DEFAULT 1,
-            default_forecast_days INTEGER DEFAULT 7,
-            FOREIGN KEY (user_id) REFERENCES users (id)
-        )
-    ''')
+    Args:
+        user_id: Optional user ID to filter by
+        
+    Returns:
+        pd.DataFrame: Sales data
+    """
+    import pandas as pd
     
-    # Create upload_history table
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS upload_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            filename TEXT NOT NULL,
-            rows_count INTEGER,
-            uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            status TEXT DEFAULT 'success',
-            FOREIGN KEY (user_id) REFERENCES users (id)
-        )
-    ''')
+    data = get_sales_data(user_id)
+    if not data:
+        return pd.DataFrame()
     
-    conn.commit()
-    conn.close()
+    df = pd.DataFrame(data)
+    if 'date' in df.columns:
+        df['date'] = pd.to_datetime(df['date'])
     
-    print(f"✅ Database initialized at {db_path}")
+    return df
