@@ -2,3 +2,18 @@ project_id = "hftjlkcfatbgdbwmrcrc"
 
 [functions.ai-chat]
 verify_jwt = false
+
+[functions.forecast]
+verify_jwt = false
+
+[functions.segments]
+verify_jwt = false
+
+[functions.basket]
+verify_jwt = false
+
+[functions.alerts]
+verify_jwt = false
+
+[functions.send-report]
+verify_jwt = false

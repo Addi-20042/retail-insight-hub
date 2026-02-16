@@ -33,10 +33,9 @@ def create_app():
     os.makedirs('data/raw', exist_ok=True)
     os.makedirs('data/processed', exist_ok=True)
     os.makedirs('models', exist_ok=True)
-    os.makedirs('database', exist_ok=True)
     
-    # Initialize database
-    init_db(app.config['DATABASE_PATH'])
+    # Initialize Supabase connection
+    init_db()
     
     # Register blueprints (API routes)
     app.register_blueprint(health_bp, url_prefix='/api')
@@ -56,4 +55,5 @@ if __name__ == '__main__':
     print("🚀 RetailMind Backend Starting...")
     print("📍 API available at: http://localhost:5000/api")
     print("📊 Health check: http://localhost:5000/api/health")
+    print("🔗 Connected to Supabase for data storage")
     app.run(host='0.0.0.0', port=5000, debug=True)

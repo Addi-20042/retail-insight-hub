@@ -33,13 +33,12 @@ export const useSalesStats = () => {
       
       const totalRevenue = rows.reduce((s, r) => s + Number(r.revenue), 0);
       const totalProducts = rows.reduce((s, r) => s + r.quantity, 0);
-      const uniqueCustomers = new Set(rows.map(r => r.product)).size; // approximate
+      const uniqueCustomers = new Set(rows.map(r => r.product)).size;
       const dates = rows.map(r => r.date).sort();
       
-      // Monthly aggregation for chart
       const monthlyMap = new Map<string, { revenue: number }>();
       rows.forEach(r => {
-        const month = r.date.substring(0, 7); // YYYY-MM
+        const month = r.date.substring(0, 7);
         const existing = monthlyMap.get(month) || { revenue: 0 };
         existing.revenue += Number(r.revenue);
         monthlyMap.set(month, existing);
@@ -92,7 +91,6 @@ export const useUploadToSupabase = () => {
         throw new Error('CSV must have columns: date, product, quantity, revenue');
       }
 
-      // Record upload
       const { data: upload, error: uploadErr } = await supabase
         .from('upload_history')
         .insert({ user_id: user.id, filename: file.name, rows_count: lines.length - 1, status: 'processing' })
@@ -100,7 +98,6 @@ export const useUploadToSupabase = () => {
         .single();
       if (uploadErr) throw uploadErr;
 
-      // Parse rows
       const rows = [];
       for (let i = 1; i < lines.length; i++) {
         const cols = lines[i].split(',').map(c => c.trim());
@@ -117,7 +114,6 @@ export const useUploadToSupabase = () => {
         });
       }
 
-      // Batch insert (chunks of 500)
       const chunkSize = 500;
       for (let i = 0; i < rows.length; i += chunkSize) {
         const chunk = rows.slice(i, i + chunkSize);
@@ -125,13 +121,11 @@ export const useUploadToSupabase = () => {
         if (error) throw error;
       }
 
-      // Update upload status
       await supabase
         .from('upload_history')
         .update({ status: 'success', rows_count: rows.length })
         .eq('id', upload.id);
 
-      // Log activity
       await supabase.from('activity_log').insert({
         user_id: user.id,
         type: 'upload',
@@ -141,10 +135,15 @@ export const useUploadToSupabase = () => {
       return { rows_processed: rows.length, filename: file.name };
     },
     onSuccess: () => {
+      // Invalidate all data queries including analytics edge functions
       queryClient.invalidateQueries({ queryKey: ['sales_data'] });
       queryClient.invalidateQueries({ queryKey: ['sales_stats'] });
       queryClient.invalidateQueries({ queryKey: ['upload_history'] });
       queryClient.invalidateQueries({ queryKey: ['activity_log'] });
+      queryClient.invalidateQueries({ queryKey: ['forecast'] });
+      queryClient.invalidateQueries({ queryKey: ['segments'] });
+      queryClient.invalidateQueries({ queryKey: ['basket'] });
+      queryClient.invalidateQueries({ queryKey: ['alerts'] });
     },
   });
 };
@@ -171,6 +170,10 @@ export const useAddSalesEntry = () => {
       queryClient.invalidateQueries({ queryKey: ['sales_data'] });
       queryClient.invalidateQueries({ queryKey: ['sales_stats'] });
       queryClient.invalidateQueries({ queryKey: ['activity_log'] });
+      queryClient.invalidateQueries({ queryKey: ['forecast'] });
+      queryClient.invalidateQueries({ queryKey: ['segments'] });
+      queryClient.invalidateQueries({ queryKey: ['basket'] });
+      queryClient.invalidateQueries({ queryKey: ['alerts'] });
     },
   });
 };
