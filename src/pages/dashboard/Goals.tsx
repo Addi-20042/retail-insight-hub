@@ -1,18 +1,29 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import GoalsAchievements from '@/components/GoalsAchievements';
 import ScheduledReports from '@/components/ScheduledReports';
+import { PageHeader } from '@/components/ui/animated-container';
 
 const Goals: React.FC = () => {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Goals & Achievements</h1>
-        <p className="text-muted-foreground mt-1">Track your progress and unlock rewards</p>
-      </div>
+      <PageHeader title="Goals & Achievements" description="Track your progress and unlock rewards" />
 
-      <GoalsAchievements />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.4 }}
+      >
+        <GoalsAchievements />
+      </motion.div>
       
-      <ScheduledReports />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.4 }}
+      >
+        <ScheduledReports />
+      </motion.div>
     </div>
   );
 };
