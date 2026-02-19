@@ -23,7 +23,7 @@ const Overview: React.FC = () => {
   const alertCount = alertsData?.alerts?.length || 0;
 
   const statCards = [
-    { label: 'Total Revenue', value: hasData ? stats.totalRevenue : 0, prefix: '$', icon: TrendingUp, color: 'primary' },
+    { label: 'Total Revenue', value: hasData ? stats.totalRevenue : 0, prefix: '₹', icon: TrendingUp, color: 'primary' },
     { label: 'Unique Products', value: hasData ? stats.uniqueProducts : 0, icon: Users, color: 'chart-secondary' },
     { label: 'Products Sold', value: hasData ? stats.totalProducts : 0, icon: ShoppingBag, color: 'success' },
     { label: 'Active Alerts', value: alertCount, icon: AlertCircle, color: 'warning' },
@@ -124,11 +124,11 @@ const Overview: React.FC = () => {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => `$${v/1000}k`} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                    formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
-                  />
+                   <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
+                   <Tooltip 
+                     contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                     formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, 'Revenue']}
+                   />
                   <Area type="monotone" dataKey="revenue" stroke="hsl(168, 76%, 42%)" strokeWidth={2.5} fill="url(#colorRevenue)" />
                 </AreaChart>
               </ResponsiveContainer>

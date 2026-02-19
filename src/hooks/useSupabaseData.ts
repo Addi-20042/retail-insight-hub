@@ -163,7 +163,7 @@ export const useAddSalesEntry = () => {
       await supabase.from('activity_log').insert({
         user_id: user.id,
         type: 'upload',
-        message: `Added manual entry: ${entry.product} ($${entry.revenue})`,
+        message: `Added manual entry: ${entry.product} (₹${entry.revenue})`,
       });
     },
     onSuccess: () => {

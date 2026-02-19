@@ -32,11 +32,12 @@ serve(async (req) => {
       });
     }
 
-    // Fetch sales data
+    // Fetch only needed columns, limit for performance
     const { data: salesData, error: dbError } = await supabase
       .from("sales_data")
       .select("date, product, quantity, revenue, category")
-      .order("date", { ascending: true });
+      .order("date", { ascending: true })
+      .limit(2000);
 
     if (dbError) throw dbError;
 
@@ -78,7 +79,7 @@ serve(async (req) => {
               id: alertId++,
               type: isSpike ? "spike" : "drop",
               title: isSpike ? "Demand Spike Detected" : "Sales Drop Detected",
-              message: `Revenue on ${day.date} was $${day.revenue.toLocaleString()} (${isSpike ? "+" : ""}${((day.revenue - mean) / mean * 100).toFixed(1)}% vs average $${mean.toFixed(0)})`,
+              message: `Revenue on ${day.date} was ₹${day.revenue.toLocaleString()} (${isSpike ? "+" : ""}${((day.revenue - mean) / mean * 100).toFixed(1)}% vs average ₹${mean.toFixed(0)})`,
               timestamp: day.date,
               category: "Anomaly Detection",
               severity: Math.abs(zScore) > 3 ? "high" : "medium",
@@ -122,7 +123,7 @@ serve(async (req) => {
         id: alertId++,
         type: "pattern",
         title: "Top Selling Product",
-        message: `"${topProduct[0]}" leads with $${topProduct[1].toLocaleString()} in revenue`,
+        message: `"${topProduct[0]}" leads with ₹${topProduct[1].toLocaleString()} in revenue`,
         timestamp: new Date().toISOString().split("T")[0],
         category: "Product Insights",
         severity: "low",

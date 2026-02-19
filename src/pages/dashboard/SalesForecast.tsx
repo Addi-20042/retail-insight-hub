@@ -44,7 +44,7 @@ const SalesForecast: React.FC = () => {
   return (
     <div className="space-y-8">
       <PageHeader title="Sales Forecast" description="AI-powered demand prediction using regression models">
-        <Button variant="outline" size="icon" onClick={() => { exportForecastToPdf({ days: forecastDays, accuracy: '94.2%', total: `$${totalPredicted.toLocaleString()}` }); toast.success('PDF exported'); }} title="Export to PDF">
+        <Button variant="outline" size="icon" onClick={() => { exportForecastToPdf({ days: forecastDays, accuracy: '94.2%', total: `₹${totalPredicted.toLocaleString('en-IN')}` }); toast.success('PDF exported'); }} title="Export to PDF">
           <Download className="w-4 h-4" />
         </Button>
         <Button variant="outline" size="icon" onClick={() => refetch()} disabled={isLoading}>
@@ -84,14 +84,14 @@ const SalesForecast: React.FC = () => {
             <FadeUp>
               <HoverCard><div className="stat-card">
                 <p className="text-sm text-muted-foreground">Total Predicted Sales</p>
-                <p className="text-2xl font-bold text-foreground mt-1">${totalPredicted.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-foreground mt-1">₹{totalPredicted.toLocaleString('en-IN')}</p>
                 <p className="text-sm text-muted-foreground mt-2">For next {forecastDays} days</p>
               </div></HoverCard>
             </FadeUp>
             <FadeUp>
               <HoverCard><div className="stat-card">
                 <p className="text-sm text-muted-foreground">Average Daily Sales</p>
-                <p className="text-2xl font-bold text-foreground mt-1">${avgDaily.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-foreground mt-1">₹{avgDaily.toLocaleString('en-IN')}</p>
                 <p className="text-sm text-muted-foreground mt-2">Predicted average</p>
               </div></HoverCard>
             </FadeUp>
@@ -146,8 +146,8 @@ const SalesForecast: React.FC = () => {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => `$${v/1000}k`} />
-                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name === 'predicted' ? 'Predicted' : name === 'upper' ? 'Upper Bound' : 'Lower Bound']} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
+                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} formatter={(value: number, name: string) => [`₹${value.toLocaleString('en-IN')}`, name === 'predicted' ? 'Predicted' : name === 'upper' ? 'Upper Bound' : 'Lower Bound']} />
                 <Area type="monotone" dataKey="upper" stroke="transparent" fill="hsl(168, 76%, 42%)" fillOpacity={0.08} />
                 <Area type="monotone" dataKey="predicted" stroke="hsl(168, 76%, 42%)" strokeWidth={2.5} fill="url(#colorForecast)" />
               </AreaChart>
@@ -180,10 +180,10 @@ const SalesForecast: React.FC = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.5 + index * 0.05 }}
                 >
-                  <td className="font-medium">{row.date}</td>
-                  <td className="text-primary font-semibold">${row.predicted.toLocaleString()}</td>
-                  <td className="text-muted-foreground">${row.lower.toLocaleString()}</td>
-                  <td className="text-muted-foreground">${row.upper.toLocaleString()}</td>
+                   <td className="font-medium">{row.date}</td>
+                   <td className="text-primary font-semibold">₹{row.predicted.toLocaleString('en-IN')}</td>
+                   <td className="text-muted-foreground">₹{row.lower.toLocaleString('en-IN')}</td>
+                   <td className="text-muted-foreground">₹{row.upper.toLocaleString('en-IN')}</td>
                 </motion.tr>
               ))}
             </tbody>

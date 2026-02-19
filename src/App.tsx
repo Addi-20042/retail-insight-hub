@@ -15,11 +15,21 @@ import CustomerSegmentation from "./pages/dashboard/CustomerSegmentation";
 import MarketBasket from "./pages/dashboard/MarketBasket";
 import Alerts from "./pages/dashboard/Alerts";
 import DataUpload from "./pages/dashboard/DataUpload";
+import DataManagement from "./pages/dashboard/DataManagement";
 import Settings from "./pages/dashboard/Settings";
 import Goals from "./pages/dashboard/Goals";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,          // 1 min — avoids refetch on every tab switch
+      gcTime: 5 * 60_000,         // 5 min cache
+      retry: 1,
+      refetchOnWindowFocus: false, // prevents performance hit on tab focus
+    },
+  },
+});
 
 // Get Google Client ID from environment or use placeholder for demo
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "demo-client-id";
@@ -45,6 +55,7 @@ const App = () => (
                     <Route path="alerts" element={<Alerts />} />
                     <Route path="goals" element={<Goals />} />
                     <Route path="upload" element={<DataUpload />} />
+                    <Route path="data" element={<DataManagement />} />
                     <Route path="settings" element={<Settings />} />
                   </Route>
                   <Route path="*" element={<NotFound />} />

@@ -35,11 +35,12 @@ serve(async (req) => {
     const url = new URL(req.url);
     const days = Math.min(Math.max(parseInt(url.searchParams.get("days") || "7"), 1), 30);
 
-    // Fetch user's sales data aggregated by date
+    // Fetch ONLY what's needed — date + revenue, limit to last 365 days for speed
     const { data: salesData, error: dbError } = await supabase
       .from("sales_data")
-      .select("date, revenue, quantity")
-      .order("date", { ascending: true });
+      .select("date, revenue")
+      .order("date", { ascending: true })
+      .limit(1000);
 
     if (dbError) throw dbError;
 
