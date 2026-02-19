@@ -67,13 +67,16 @@
     --gradient-primary: linear-gradient(135deg, hsl(168, 76%, 42%) 0%, hsl(199, 89%, 48%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0, 0%, 100%) 0%, hsl(210, 20%, 98%) 100%);
     --gradient-sidebar: linear-gradient(180deg, hsl(222, 47%, 11%) 0%, hsl(222, 47%, 8%) 100%);
+    --glow-primary: 0 0 24px hsl(168 76% 42% / 0.2);
+    --glow-card: 0 0 0 1px hsl(168 76% 42% / 0.06);
 
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
     --shadow-elevated: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-glow: 0 4px 20px -4px hsl(168 76% 42% / 0.25);
   }
 
   .dark {
@@ -104,6 +107,11 @@
     --border: 222 40% 18%;
     --input: 222 40% 18%;
     --ring: 168 76% 42%;
+
+    --glow-primary: 0 0 32px hsl(168 76% 42% / 0.35);
+    --glow-card: 0 0 0 1px hsl(168 76% 42% / 0.1);
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.25);
+    --shadow-glow: 0 4px 24px -4px hsl(168 76% 42% / 0.4);
   }
 }
 
@@ -112,9 +120,15 @@
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, sans-serif;
+    /* Smooth dark mode transition */
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -124,7 +138,8 @@
 
 @layer components {
   .glass-card {
-    @apply bg-card/80 backdrop-blur-sm border border-border/50 shadow-card;
+    @apply bg-card/80 backdrop-blur-sm border border-border/50;
+    box-shadow: var(--shadow-card), var(--glow-card);
   }
 
   .gradient-text {
@@ -137,19 +152,33 @@
   }
 
   .stat-card {
-    @apply bg-card rounded-xl p-6 shadow-card border border-border/50 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5;
+    @apply bg-card rounded-xl p-5 border border-border/50 transition-all duration-200;
+    box-shadow: var(--shadow-card);
+  }
+
+  .stat-card:hover {
+    box-shadow: var(--shadow-glow), var(--shadow-card);
+    border-color: hsl(var(--primary) / 0.2);
   }
 
   .nav-item {
-    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground/70 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-foreground;
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/70 transition-all duration-150 hover:bg-sidebar-accent hover:text-sidebar-foreground text-sm;
   }
 
   .nav-item-active {
     @apply bg-sidebar-accent text-sidebar-primary font-medium;
+    box-shadow: inset 2px 0 0 hsl(var(--sidebar-primary));
   }
 
   .chart-container {
-    @apply bg-card rounded-xl p-6 shadow-card border border-border/50;
+    @apply bg-card rounded-xl p-6 border border-border/50;
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .chart-container:hover {
+    box-shadow: var(--shadow-glow), var(--shadow-card);
+    border-color: hsl(var(--primary) / 0.15);
   }
 
   .data-table {
@@ -183,46 +212,59 @@
   .alert-card-danger {
     @apply bg-destructive/10 border-destructive/30 text-destructive;
   }
+
+  /* Premium glow button */
+  .btn-glow {
+    box-shadow: var(--shadow-glow);
+    transition: box-shadow 0.2s ease, transform 0.15s ease;
+  }
+
+  .btn-glow:hover {
+    box-shadow: var(--glow-primary), var(--shadow-glow);
+    transform: translateY(-1px);
+  }
+
+  /* Page transition wrapper */
+  .page-transition {
+    @apply animate-fade-in;
+  }
 }
 
 @layer utilities {
   .animate-fade-in {
-    animation: fadeIn 0.3s ease-out;
+    animation: fadeIn 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
   }
 
   .animate-slide-in {
-    animation: slideIn 0.3s ease-out;
+    animation: slideIn 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
   }
 
   .animate-scale-in {
-    animation: scaleIn 0.2s ease-out;
+    animation: scaleIn 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  }
+
+  .animate-glow-pulse {
+    animation: glowPulse 2s ease-in-out infinite;
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   @keyframes slideIn {
-    from { 
-      opacity: 0; 
-      transform: translateY(10px); 
-    }
-    to { 
-      opacity: 1; 
-      transform: translateY(0); 
-    }
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   @keyframes scaleIn {
-    from { 
-      opacity: 0; 
-      transform: scale(0.95); 
-    }
-    to { 
-      opacity: 1; 
-      transform: scale(1); 
-    }
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 8px hsl(168 76% 42% / 0.3); }
+    50% { box-shadow: 0 0 20px hsl(168 76% 42% / 0.6); }
   }
 }
 
@@ -230,4 +272,49 @@
   100% {
     transform: translateX(100%);
   }
+}
+
+/* Smooth transitions for theme switching on all major elements */
+*,
+*::before,
+*::after {
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+/* Exclude transitions from animations & transforms */
+button,
+a,
+[role="button"],
+input,
+select,
+textarea {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.15s ease,
+    box-shadow 0.2s ease,
+    opacity 0.15s ease;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
 }

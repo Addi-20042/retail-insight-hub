@@ -41,10 +41,11 @@ serve(async (req) => {
       });
     }
 
-    // Fetch sales data
+    // Fetch only needed columns — limit 2000 rows for performance
     const { data: salesData, error: dbError } = await supabase
       .from("sales_data")
-      .select("product, quantity, revenue, customer_id, transaction_id");
+      .select("product, quantity, revenue, customer_id, transaction_id")
+      .limit(2000);
 
     if (dbError) throw dbError;
 

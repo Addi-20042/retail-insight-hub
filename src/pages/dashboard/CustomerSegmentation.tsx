@@ -33,9 +33,9 @@ const CustomerSegmentation: React.FC = () => {
 
   const stats = [
     { icon: Users, color: 'primary', label: 'Total Customers', value: totalCustomers.toLocaleString() },
-    { icon: DollarSign, color: 'chart-secondary', label: 'Total Revenue', value: `$${totalRevenue.toLocaleString()}` },
+    { icon: DollarSign, color: 'chart-secondary', label: 'Total Revenue', value: `₹${totalRevenue.toLocaleString('en-IN')}` },
     { icon: TrendingUp, color: 'success', label: 'Segments Found', value: segmentData.length },
-    { icon: ShoppingBag, color: 'warning', label: 'Avg. Spend', value: `$${totalCustomers > 0 ? Math.round(totalRevenue / totalCustomers) : 0}` },
+    { icon: ShoppingBag, color: 'warning', label: 'Avg. Spend', value: `₹${totalCustomers > 0 ? Math.round(totalRevenue / totalCustomers).toLocaleString('en-IN') : 0}` },
   ];
 
   return (
@@ -140,8 +140,8 @@ const CustomerSegmentation: React.FC = () => {
                     <p className="text-sm text-muted-foreground mt-1">{segment.description}</p>
                     <div className="flex gap-6 mt-3">
                       <div><p className="text-xs text-muted-foreground">Customers</p><p className="font-semibold text-foreground">{segment.count}</p></div>
-                      <div><p className="text-xs text-muted-foreground">Avg. Spend</p><p className="font-semibold text-foreground">${segment.avgSpend}</p></div>
-                      <div><p className="text-xs text-muted-foreground">Total Revenue</p><p className="font-semibold text-foreground">${segment.totalRevenue.toLocaleString()}</p></div>
+                      <div><p className="text-xs text-muted-foreground">Avg. Spend</p><p className="font-semibold text-foreground">₹{Number(segment.avgSpend).toLocaleString('en-IN')}</p></div>
+                      <div><p className="text-xs text-muted-foreground">Total Revenue</p><p className="font-semibold text-foreground">₹{segment.totalRevenue.toLocaleString('en-IN')}</p></div>
                     </div>
                   </div>
                 </div>
@@ -172,7 +172,7 @@ const CustomerSegmentation: React.FC = () => {
                 <motion.tr key={index} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 + index * 0.04 }}>
                   <td className="font-medium">{row.product}</td>
                   <td>{row.quantity.toLocaleString()}</td>
-                  <td className="text-primary font-semibold">${row.revenue.toLocaleString()}</td>
+                  <td className="text-primary font-semibold">₹{row.revenue.toLocaleString('en-IN')}</td>
                   <td>
                     {segmentData[row.segment] && (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: `${segmentData[row.segment].color}20`, color: segmentData[row.segment].color }}>

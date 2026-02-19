@@ -28,8 +28,8 @@ export const FadeUp: React.FC<HTMLMotionProps<'div'> & { children: React.ReactNo
   <motion.div
     className={className}
     variants={{
-      hidden: { opacity: 0, y: 20 },
-      visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } },
+      hidden: { opacity: 0, y: 18 },
+      visible: { opacity: 1, y: 0, transition: { duration: 0.42, ease: [0.25, 0.46, 0.45, 0.94] } },
     }}
     {...props}
   >
@@ -61,7 +61,7 @@ export const ShimmerSkeleton: React.FC<
     "relative overflow-hidden rounded-lg bg-muted",
     className
   )} style={style} {...props}>
-    <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+    <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.6s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
   </div>
 );
 
@@ -69,41 +69,44 @@ export const ShimmerSkeleton: React.FC<
 export const StatCardSkeleton: React.FC = () => (
   <div className="stat-card">
     <div className="flex items-start justify-between">
-      <div className="flex-1">
-        <ShimmerSkeleton className="h-4 w-24 mb-2" />
-        <ShimmerSkeleton className="h-8 w-32" />
+      <div className="flex-1 space-y-2">
+        <ShimmerSkeleton className="h-3.5 w-20 mb-3" />
+        <ShimmerSkeleton className="h-7 w-28" />
       </div>
-      <ShimmerSkeleton className="w-10 h-10 rounded-lg" />
+      <ShimmerSkeleton className="w-9 h-9 rounded-lg" />
     </div>
   </div>
 );
 
-// Chart skeleton
-export const ChartSkeleton: React.FC<{ height?: string }> = ({ height = "h-[280px]" }) => (
-  <div className={`${height} flex items-end gap-2 px-8 pb-4`}>
-    {Array.from({ length: 12 }).map((_, i) => (
-      <div key={i} className="flex-1 flex flex-col justify-end">
-        <ShimmerSkeleton
-          className="w-full rounded-t-sm"
-          style={{ height: `${20 + Math.random() * 60}%` } as React.CSSProperties}
-        />
-      </div>
-    ))}
-  </div>
-);
+// Chart skeleton with more realistic bars
+export const ChartSkeleton: React.FC<{ height?: string }> = ({ height = "h-[280px]" }) => {
+  const barHeights = [45, 62, 38, 75, 55, 80, 48, 70, 42, 68, 58, 72];
+  return (
+    <div className={`${height} flex items-end gap-2 px-8 pb-4`}>
+      {barHeights.map((h, i) => (
+        <div key={i} className="flex-1 flex flex-col justify-end">
+          <ShimmerSkeleton
+            className="w-full rounded-t-sm"
+            style={{ height: `${h}%` } as React.CSSProperties}
+          />
+        </div>
+      ))}
+    </div>
+  );
+};
 
 // Table skeleton
 export const TableSkeleton: React.FC<{ rows?: number; cols?: number }> = ({ rows = 5, cols = 4 }) => (
   <div className="space-y-3">
     <div className="flex gap-4 py-2">
       {Array.from({ length: cols }).map((_, i) => (
-        <ShimmerSkeleton key={i} className="h-4 flex-1" />
+        <ShimmerSkeleton key={i} className={`h-4 ${i === 0 ? 'w-32' : 'flex-1'}`} />
       ))}
     </div>
     {Array.from({ length: rows }).map((_, i) => (
       <div key={i} className="flex gap-4 py-3 border-t border-border/30">
         {Array.from({ length: cols }).map((_, j) => (
-          <ShimmerSkeleton key={j} className="h-4 flex-1" />
+          <ShimmerSkeleton key={j} className={`h-4 ${j === 0 ? 'w-32' : 'flex-1'}`} />
         ))}
       </div>
     ))}
@@ -116,32 +119,34 @@ export const AnimatedNumber: React.FC<{
   prefix?: string;
   suffix?: string;
   className?: string;
-}> = ({ value, prefix = '', suffix = '', className }) => (
+  locale?: string;
+}> = ({ value, prefix = '', suffix = '', className, locale = 'en-IN' }) => (
   <motion.span
     className={className}
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
+    initial={{ opacity: 0, y: 6 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.4 }}
     key={value}
   >
-    {prefix}{value.toLocaleString()}{suffix}
+    {prefix}{typeof value === 'number' ? value.toLocaleString(locale) : value}{suffix}
   </motion.span>
 );
 
-// Hover lift card
+// Hover lift card — with subtle glow on hover
 export const HoverCard: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className }) => (
   <motion.div
     className={cn("transition-shadow", className)}
-    whileHover={{ y: -2, boxShadow: '0 8px 30px -12px hsl(var(--primary) / 0.15)' }}
-    transition={{ duration: 0.2 }}
+    whileHover={{ y: -3, boxShadow: '0 8px 32px -12px hsl(var(--primary) / 0.22)' }}
+    transition={{ duration: 0.18, ease: 'easeOut' }}
   >
     {children}
   </motion.div>
 );
 
-// Page header with animated underline
+// Page header with gradient title accent
 export const PageHeader: React.FC<{
   title: string;
   description: string;
@@ -149,14 +154,48 @@ export const PageHeader: React.FC<{
 }> = ({ title, description, children }) => (
   <motion.div
     className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-    initial={{ opacity: 0, y: -10 }}
+    initial={{ opacity: 0, y: -12 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.4 }}
+    transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
   >
     <div>
-      <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">{title}</h1>
-      <p className="text-muted-foreground mt-1">{description}</p>
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+        <span className="gradient-text">{title}</span>
+      </h1>
+      <p className="text-muted-foreground mt-1 text-sm">{description}</p>
     </div>
-    {children && <div className="flex items-center gap-3">{children}</div>}
+    {children && (
+      <motion.div
+        className="flex items-center gap-3"
+        initial={{ opacity: 0, x: 10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.15, duration: 0.35 }}
+      >
+        {children}
+      </motion.div>
+    )}
   </motion.div>
 );
+
+// Glow badge
+export const GlowBadge: React.FC<{
+  children: React.ReactNode;
+  variant?: 'primary' | 'success' | 'warning' | 'destructive';
+  className?: string;
+}> = ({ children, variant = 'primary', className }) => {
+  const variantStyles = {
+    primary: 'bg-primary/10 text-primary border-primary/20',
+    success: 'bg-success/10 text-success border-success/20',
+    warning: 'bg-warning/10 text-warning border-warning/20',
+    destructive: 'bg-destructive/10 text-destructive border-destructive/20',
+  };
+  return (
+    <span className={cn(
+      "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border",
+      variantStyles[variant],
+      className
+    )}>
+      {children}
+    </span>
+  );
+};
