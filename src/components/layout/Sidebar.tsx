@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  BarChart3, Users, ShoppingCart, AlertTriangle, Upload, LogOut,
+  BarChart3, Users, ShoppingCart, Upload, LogOut,
   LayoutDashboard, Brain, Settings, Target, Table2
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,12 +10,12 @@ import { cn } from '@/lib/utils';
 import BackendStatus from '@/components/BackendStatus';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
+
 const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Overview', end: true },
   { path: '/dashboard/forecast', icon: BarChart3, label: 'Sales Forecast' },
   { path: '/dashboard/segmentation', icon: Users, label: 'Customer Segmentation' },
   { path: '/dashboard/basket', icon: ShoppingCart, label: 'Market Basket' },
-  { path: '/dashboard/alerts', icon: AlertTriangle, label: 'Smart Alerts' },
   { path: '/dashboard/goals', icon: Target, label: 'Goals & Reports' },
   { path: '/dashboard/upload', icon: Upload, label: 'Data Upload' },
   { path: '/dashboard/data', icon: Table2, label: 'Data Management' },

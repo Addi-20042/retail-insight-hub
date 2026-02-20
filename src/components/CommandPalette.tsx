@@ -13,7 +13,6 @@ import {
   BarChart3,
   Users,
   ShoppingCart,
-  AlertTriangle,
   Upload,
   Settings,
   LayoutDashboard,
@@ -25,10 +24,12 @@ import {
   Download,
   StickyNote,
   Keyboard,
+  Target,
+  Table2,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { exportForecastToPdf, exportAlertsToPdf } from '@/lib/exportPdf';
+import { exportForecastToPdf } from '@/lib/exportPdf';
 
 interface CommandPaletteProps {
   onOpenNotes?: () => void;
@@ -47,7 +48,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onOpenNotes }) =
         setOpen((open) => !open);
       }
     };
-
     document.addEventListener('keydown', down);
     return () => document.removeEventListener('keydown', down);
   }, []);
@@ -62,8 +62,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onOpenNotes }) =
     { icon: BarChart3, label: 'Sales Forecast', path: '/dashboard/forecast' },
     { icon: Users, label: 'Customer Segmentation', path: '/dashboard/segmentation' },
     { icon: ShoppingCart, label: 'Market Basket', path: '/dashboard/basket' },
-    { icon: AlertTriangle, label: 'Smart Alerts', path: '/dashboard/alerts' },
+    { icon: Target, label: 'Goals & Reports', path: '/dashboard/goals' },
     { icon: Upload, label: 'Data Upload', path: '/dashboard/upload' },
+    { icon: Table2, label: 'Data Management', path: '/dashboard/data' },
     { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
   ];
 
@@ -72,7 +73,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onOpenNotes }) =
       <CommandInput placeholder="Type a command or search..." />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
-        
+
         <CommandGroup heading="Navigation">
           {navigationItems.map((item) => (
             <CommandItem
@@ -84,17 +85,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onOpenNotes }) =
             </CommandItem>
           ))}
         </CommandGroup>
-        
+
         <CommandSeparator />
-        
+
         <CommandGroup heading="Quick Actions">
           <CommandItem onSelect={() => runCommand(() => exportForecastToPdf({}))}>
             <Download className="mr-2 h-4 w-4" />
             Export Forecast Report
           </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => exportAlertsToPdf([]))}>
+          <CommandItem onSelect={() => runCommand(() => {})}>
             <FileText className="mr-2 h-4 w-4" />
-            Export Alerts Report
+            Export PDF Report
           </CommandItem>
           {onOpenNotes && (
             <CommandItem onSelect={() => runCommand(onOpenNotes)}>
@@ -103,9 +104,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onOpenNotes }) =
             </CommandItem>
           )}
         </CommandGroup>
-        
+
         <CommandSeparator />
-        
+
         <CommandGroup heading="Theme">
           <CommandItem onSelect={() => runCommand(() => setTheme('light'))}>
             <Sun className="mr-2 h-4 w-4" />
@@ -118,9 +119,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onOpenNotes }) =
             {theme === 'dark' && <span className="ml-auto text-xs text-primary">Active</span>}
           </CommandItem>
         </CommandGroup>
-        
+
         <CommandSeparator />
-        
+
         <CommandGroup heading="Account">
           <CommandItem onSelect={() => runCommand(logout)}>
             <LogOut className="mr-2 h-4 w-4" />
@@ -128,7 +129,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onOpenNotes }) =
           </CommandItem>
         </CommandGroup>
       </CommandList>
-      
+
       <div className="p-2 border-t border-border text-xs text-muted-foreground flex items-center gap-2">
         <Keyboard className="w-3 h-3" />
         <span>Press</span>

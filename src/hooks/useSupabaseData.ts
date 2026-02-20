@@ -2,6 +2,20 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+// ─── Has Data (lightweight check) ───
+
+export const useHasSalesData = () => {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['has_sales_data', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from('sales_data').select('id').limit(1);
+      return (data?.length ?? 0) > 0;
+    },
+    enabled: !!user,
+  });
+};
+
 // ─── Sales Data Hooks ───
 
 export const useSalesData = () => {
@@ -19,6 +33,7 @@ export const useSalesData = () => {
     enabled: !!user,
   });
 };
+
 
 export const useSalesStats = () => {
   const { user } = useAuth();
