@@ -4,14 +4,12 @@ import {
   BarChart3,
   Upload,
   FileText,
-  AlertTriangle,
   Users,
   Search,
   Sparkles,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { exportForecastToPdf, exportAlertsToPdf } from '@/lib/exportPdf';
+import { exportForecastToPdf } from '@/lib/exportPdf';
 import { toast } from 'sonner';
 
 export const QuickActions: React.FC = () => {
@@ -46,14 +44,6 @@ export const QuickActions: React.FC = () => {
       },
     },
     {
-      icon: AlertTriangle,
-      label: 'View Alerts',
-      description: 'Check smart alerts',
-      color: 'text-warning',
-      bgColor: 'bg-warning/10',
-      onClick: () => navigate('/dashboard/alerts'),
-    },
-    {
       icon: Users,
       label: 'Segments',
       description: 'Customer clusters',
@@ -80,7 +70,7 @@ export const QuickActions: React.FC = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {actions.map((action, index) => (
             <button
               key={index}

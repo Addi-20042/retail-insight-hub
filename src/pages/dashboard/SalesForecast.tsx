@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForecast } from '@/hooks/useApiData';
-import { useSalesData } from '@/hooks/useSupabaseData';
+import { useHasSalesData } from '@/hooks/useSupabaseData';
 import { EmptyState } from '@/components/EmptyState';
 import { exportForecastToPdf } from '@/lib/exportPdf';
 import { toast } from 'sonner';
@@ -15,18 +15,17 @@ import {
   StaggerContainer, FadeUp, PageHeader, StatCardSkeleton, ChartSkeleton, TableSkeleton, HoverCard
 } from '@/components/ui/animated-container';
 
+
 const SalesForecast: React.FC = () => {
   const [forecastDays, setForecastDays] = useState('7');
   const { data, isLoading, isError, refetch } = useForecast(parseInt(forecastDays));
-  const { data: salesData } = useSalesData();
-
-  const hasData = salesData && salesData.length > 0;
+  const { data: hasData, isLoading: checkingData } = useHasSalesData();
   const forecastData = data?.data || [];
   const totalPredicted = data?.total_predicted || 0;
   const avgDaily = data?.avg_daily || 0;
   const trend = data?.trend === 'upward';
 
-  if (!hasData && !isLoading) {
+  if (!hasData && !checkingData) {
     return (
       <div className="space-y-8">
         <PageHeader title="Sales Forecast" description="AI-powered demand prediction using regression models" />
