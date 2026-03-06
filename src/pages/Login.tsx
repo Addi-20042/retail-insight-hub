@@ -10,6 +10,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { ForgotPasswordModal } from '@/components/ForgotPasswordModal';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { lovable } from '@/integrations/lovable/index';
 
 const Login: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -37,11 +38,8 @@ const Login: React.FC = () => {
   const handleGoogleLogin = async () => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-        },
+      const { error } = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
       });
       if (error) throw error;
     } catch (error) {
