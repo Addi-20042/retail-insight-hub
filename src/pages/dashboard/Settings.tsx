@@ -163,7 +163,7 @@ const Settings: React.FC = () => {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid grid-cols-5 w-full overflow-x-auto">
+        <TabsList className="flex w-full overflow-x-auto no-scrollbar">
           <TabsTrigger value="profile" className="gap-1.5 text-xs sm:text-sm">
             <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">Profile</span>

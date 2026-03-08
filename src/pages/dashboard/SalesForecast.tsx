@@ -145,12 +145,12 @@ const SalesForecast: React.FC = () => {
         transition={{ delay: 0.3 }}
         className="chart-container"
       >
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
           <div>
-            <h3 className="text-lg font-semibold text-foreground">Forecast Chart</h3>
-            <p className="text-sm text-muted-foreground">Historical sales with predicted forecast and confidence interval</p>
+            <h3 className="text-base sm:text-lg font-semibold text-foreground">Forecast Chart</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground">Historical sales with predicted forecast and confidence interval</p>
           </div>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs text-muted-foreground flex-wrap">
             <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-[hsl(221,83%,53%)] rounded"></span>Actual</span>
             <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-[hsl(168,76%,42%)] rounded"></span>Predicted</span>
             <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-[hsl(168,76%,42%)]/10 rounded-sm border border-[hsl(168,76%,42%)]/30"></span>Confidence</span>
@@ -162,7 +162,7 @@ const SalesForecast: React.FC = () => {
           <div className="h-[400px] flex items-center justify-center text-muted-foreground">No forecast data available</div>
         ) : (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.6 }}>
-            <ResponsiveContainer width="100%" height={400}>
+            <ResponsiveContainer width="100%" height={300} className="sm:[&]:!h-[400px]">
               <ComposedChart data={chartData}>
                 <defs>
                   <linearGradient id="colorForecast" x1="0" y1="0" x2="0" y2="1">

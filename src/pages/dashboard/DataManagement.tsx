@@ -290,11 +290,11 @@ const DataManagement: React.FC = () => {
           
           {/* Date range filter */}
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-            <div className="flex items-center gap-2 flex-1">
-              <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
-              <Input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }} className="text-sm" placeholder="From" />
+            <div className="flex items-center gap-2 flex-1 flex-wrap sm:flex-nowrap">
+              <Calendar className="w-4 h-4 text-muted-foreground shrink-0 hidden sm:block" />
+              <Input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }} className="text-sm flex-1 min-w-[120px]" placeholder="From" />
               <span className="text-muted-foreground text-sm">to</span>
-              <Input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }} className="text-sm" placeholder="To" />
+              <Input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }} className="text-sm flex-1 min-w-[120px]" placeholder="To" />
             </div>
             {selectedRows.size > 0 && (
               <AlertDialog>

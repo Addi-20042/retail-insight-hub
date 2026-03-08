@@ -141,10 +141,10 @@ const AIChatAssistant: React.FC = () => {
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 z-50"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 z-50"
         size="icon"
       >
-        <Bot className="h-6 w-6" />
+        <Bot className="h-5 w-5 sm:h-6 sm:w-6" />
       </Button>
     );
   }
@@ -152,12 +152,14 @@ const AIChatAssistant: React.FC = () => {
   return (
     <div
       className={cn(
-        "fixed bottom-6 right-6 z-50 flex flex-col bg-background border border-border rounded-xl shadow-2xl transition-all duration-200",
-        isMinimized ? "w-80 h-14" : "w-96 h-[32rem]"
+        "fixed z-50 flex flex-col bg-background border border-border shadow-2xl transition-all duration-200",
+        isMinimized 
+          ? "bottom-4 right-4 sm:bottom-6 sm:right-6 w-72 sm:w-80 h-14 rounded-xl" 
+          : "inset-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:w-96 sm:h-[32rem] sm:rounded-xl sm:max-h-[80vh]"
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-primary/10 to-primary/5 rounded-t-xl">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-primary/10 to-primary/5 sm:rounded-t-xl">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-lg bg-primary/20">
             <Sparkles className="h-4 w-4 text-primary" />

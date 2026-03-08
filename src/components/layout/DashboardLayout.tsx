@@ -72,7 +72,7 @@ const DashboardLayout: React.FC = () => {
 
       {/* Mobile Sidebar Sheet */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="p-0 w-64">
+        <SheetContent side="left" className="p-0 w-[280px] max-w-[85vw]">
           <Sidebar onNavigate={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>
@@ -84,17 +84,17 @@ const DashboardLayout: React.FC = () => {
         }`}
       >
         {/* Mobile Header */}
-        <header className="lg:hidden sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-          <div className="flex items-center justify-between h-14 px-4">
+        <header className="lg:hidden sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border safe-area-top">
+          <div className="flex items-center justify-between h-14 px-3 sm:px-4">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="shrink-0">
                   <Menu className="w-5 h-5" />
                 </Button>
               </SheetTrigger>
             </Sheet>
-            <span className="font-semibold text-foreground">RetailMind</span>
-            <div className="flex items-center gap-1">
+            <span className="font-semibold text-foreground text-sm">RetailMind</span>
+            <div className="flex items-center gap-0.5">
               <QuickNotes open={notesOpen} onOpenChange={setNotesOpen} />
               <ThemeToggle />
             </div>
@@ -147,7 +147,7 @@ const DashboardLayout: React.FC = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto animate-fade-in">
+        <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-x-hidden overflow-y-auto animate-fade-in pb-20 sm:pb-8">
           <AchievementContext.Provider value={{ recheckAchievements }}>
             <Outlet />
           </AchievementContext.Provider>
