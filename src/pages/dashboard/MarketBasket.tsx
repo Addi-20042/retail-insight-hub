@@ -1,30 +1,55 @@
-import React, { useState } from 'react';
-import { Search, ShoppingCart, ArrowRight, Sparkles, RefreshCw, AlertCircle } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Search, ShoppingCart, ArrowRight, Sparkles, AlertCircle, TrendingUp, BarChart3, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useBasketSearch } from '@/hooks/useApiData';
+import { useBasketRules } from '@/hooks/useApiData';
 import { useSalesData } from '@/hooks/useSupabaseData';
 import { EmptyState } from '@/components/EmptyState';
 import { 
   StaggerContainer, FadeUp, PageHeader, StatCardSkeleton, HoverCard
 } from '@/components/ui/animated-container';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 
 const MarketBasket: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [hasSearched, setHasSearched] = useState(false);
-  const { data, isLoading, isError, refetch } = useBasketSearch(searchQuery, hasSearched);
+  const [sortBy, setSortBy] = useState<'lift' | 'confidence' | 'support'>('lift');
+  const { data, isLoading, isError } = useBasketRules();
   const { data: salesData } = useSalesData();
 
   const hasData = salesData && salesData.length > 0;
-  const searchResults = data?.rules || [];
-  const avgConfidence = data?.avg_confidence || 0;
-  const avgLift = data?.avg_lift || 0;
+  const allRules = data?.rules || [];
 
-  const handleSearch = () => { setSearchQuery(searchTerm); setHasSearched(true); if (hasSearched) refetch(); };
-  const handleKeyPress = (e: React.KeyboardEvent) => { if (e.key === 'Enter') handleSearch(); };
-  const getConfidenceColor = (c: number) => c >= 0.8 ? 'text-success' : c >= 0.6 ? 'text-warning' : 'text-muted-foreground';
+  // Filter rules by search term
+  const filteredRules = useMemo(() => {
+    let rules = [...allRules];
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      rules = rules.filter(
+        r => r.productA.toLowerCase().includes(term) || r.productB.toLowerCase().includes(term)
+      );
+    }
+    rules.sort((a, b) => b[sortBy] - a[sortBy]);
+    return rules;
+  }, [allRules, searchTerm, sortBy]);
+
+  // Stats from all rules (not filtered)
+  const avgConfidence = allRules.length > 0
+    ? allRules.reduce((s, r) => s + r.confidence, 0) / allRules.length
+    : 0;
+  const avgLift = allRules.length > 0
+    ? allRules.reduce((s, r) => s + r.lift, 0) / allRules.length
+    : 0;
+
+  const getConfidenceColor = (c: number) =>
+    c >= 0.8 ? 'text-success' : c >= 0.6 ? 'text-warning' : 'text-muted-foreground';
+
+  const getLiftBadge = (lift: number) => {
+    if (lift >= 3) return { label: 'Strong', variant: 'default' as const };
+    if (lift >= 1.5) return { label: 'Moderate', variant: 'secondary' as const };
+    return { label: 'Weak', variant: 'outline' as const };
+  };
 
   // Check if data has transaction_id or customer_id
   const hasTransactionIds = salesData?.some(row => row.transaction_id && row.transaction_id.trim() !== '') ?? false;
@@ -65,7 +90,50 @@ const MarketBasket: React.FC = () => {
         </motion.div>
       )}
 
-      {/* Search */}
+      {/* Summary Stats */}
+      <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {isLoading ? (
+          <><FadeUp><StatCardSkeleton /></FadeUp><FadeUp><StatCardSkeleton /></FadeUp><FadeUp><StatCardSkeleton /></FadeUp></>
+        ) : (
+          <>
+            <FadeUp>
+              <HoverCard>
+                <div className="stat-card">
+                  <div className="flex items-center gap-2 mb-1">
+                    <ShoppingCart className="w-4 h-4 text-primary" />
+                    <p className="text-sm text-muted-foreground">Associations Found</p>
+                  </div>
+                  <p className="text-2xl font-bold text-foreground">{allRules.length}</p>
+                </div>
+              </HoverCard>
+            </FadeUp>
+            <FadeUp>
+              <HoverCard>
+                <div className="stat-card">
+                  <div className="flex items-center gap-2 mb-1">
+                    <BarChart3 className="w-4 h-4 text-primary" />
+                    <p className="text-sm text-muted-foreground">Avg. Confidence</p>
+                  </div>
+                  <p className="text-2xl font-bold text-foreground">{(avgConfidence * 100).toFixed(1)}%</p>
+                </div>
+              </HoverCard>
+            </FadeUp>
+            <FadeUp>
+              <HoverCard>
+                <div className="stat-card">
+                  <div className="flex items-center gap-2 mb-1">
+                    <TrendingUp className="w-4 h-4 text-primary" />
+                    <p className="text-sm text-muted-foreground">Avg. Lift</p>
+                  </div>
+                  <p className="text-2xl font-bold text-foreground">{avgLift.toFixed(2)}x</p>
+                </div>
+              </HoverCard>
+            </FadeUp>
+          </>
+        )}
+      </StaggerContainer>
+
+      {/* Search & Filter Bar */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -75,33 +143,35 @@ const MarketBasket: React.FC = () => {
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input type="text" placeholder="Search for a product..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} onKeyPress={handleKeyPress} className="pl-10 h-12" />
+            <Input
+              type="text"
+              placeholder="Filter by product name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 h-12"
+            />
           </div>
-          <Button onClick={handleSearch} size="lg" className="gap-2" disabled={isLoading}>
-            {isLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            Find Associations
-          </Button>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+            <SelectTrigger className="w-full sm:w-[180px] h-12">
+              <Filter className="w-4 h-4 mr-2 text-muted-foreground" />
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="lift">Sort by Lift</SelectItem>
+              <SelectItem value="confidence">Sort by Confidence</SelectItem>
+              <SelectItem value="support">Sort by Support</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        {!hasSearched && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="mt-8 text-center py-12"
-          >
-            <motion.div
-              animate={{ y: [0, -8, 0] }}
-              transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
-            >
-              <ShoppingCart className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-            </motion.div>
-            <h3 className="text-lg font-medium text-foreground mb-2">Search for Product Associations</h3>
-            <p className="text-muted-foreground max-w-md mx-auto">Enter a product name to discover which items are frequently purchased together.</p>
-          </motion.div>
+        {searchTerm && (
+          <p className="text-sm text-muted-foreground mt-3">
+            Showing {filteredRules.length} of {allRules.length} associations matching "<span className="font-medium text-foreground">{searchTerm}</span>"
+          </p>
         )}
       </motion.div>
 
-      {isError && hasSearched && (
+      {/* Error State */}
+      {isError && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 flex items-center gap-3">
           <AlertCircle className="w-5 h-5 text-destructive shrink-0" />
           <div>
@@ -111,70 +181,83 @@ const MarketBasket: React.FC = () => {
         </motion.div>
       )}
 
+      {/* Results */}
       <AnimatePresence mode="wait">
-        {hasSearched && (
+        {isLoading ? (
           <motion.div
-            key="results"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-6"
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
           >
-            <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {isLoading ? (
-                <><FadeUp><StatCardSkeleton /></FadeUp><FadeUp><StatCardSkeleton /></FadeUp><FadeUp><StatCardSkeleton /></FadeUp></>
-              ) : (
-                <>
-                  <FadeUp><HoverCard><div className="stat-card"><p className="text-sm text-muted-foreground">Rules Found</p><p className="text-2xl font-bold text-foreground">{searchResults.length}</p></div></HoverCard></FadeUp>
-                  <FadeUp><HoverCard><div className="stat-card"><p className="text-sm text-muted-foreground">Avg. Confidence</p><p className="text-2xl font-bold text-foreground">{(avgConfidence * 100).toFixed(1)}%</p></div></HoverCard></FadeUp>
-                  <FadeUp><HoverCard><div className="stat-card"><p className="text-sm text-muted-foreground">Avg. Lift</p><p className="text-2xl font-bold text-foreground">{avgLift.toFixed(2)}x</p></div></HoverCard></FadeUp>
-                </>
-              )}
-            </StaggerContainer>
-
-            {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="bg-card rounded-xl p-5 border border-border/50 animate-pulse">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="h-9 w-24 bg-muted rounded-lg" />
-                      <div className="w-5 h-5 bg-muted rounded" />
-                      <div className="h-9 w-24 bg-muted rounded-lg" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="space-y-1"><div className="h-3 w-12 bg-muted rounded" /><div className="h-4 w-10 bg-muted rounded mt-1" /></div>
-                      <div className="space-y-1"><div className="h-3 w-16 bg-muted rounded" /><div className="h-4 w-10 bg-muted rounded mt-1" /></div>
-                      <div className="space-y-1"><div className="h-3 w-8 bg-muted rounded" /><div className="h-4 w-10 bg-muted rounded mt-1" /></div>
-                    </div>
-                  </div>
-                ))}
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-card rounded-xl p-5 border border-border/50 animate-pulse">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-9 w-24 bg-muted rounded-lg" />
+                  <div className="w-5 h-5 bg-muted rounded" />
+                  <div className="h-9 w-24 bg-muted rounded-lg" />
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-1"><div className="h-3 w-12 bg-muted rounded" /><div className="h-4 w-10 bg-muted rounded mt-1" /></div>
+                  <div className="space-y-1"><div className="h-3 w-16 bg-muted rounded" /><div className="h-4 w-10 bg-muted rounded mt-1" /></div>
+                  <div className="space-y-1"><div className="h-3 w-8 bg-muted rounded" /><div className="h-4 w-10 bg-muted rounded mt-1" /></div>
+                </div>
               </div>
-            ) : searchResults.length > 0 ? (
-              <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {searchResults.map((rule, index) => (
-                  <FadeUp key={index}>
+            ))}
+          </motion.div>
+        ) : filteredRules.length > 0 ? (
+          <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredRules.map((rule, index) => {
+                const badge = getLiftBadge(rule.lift);
+                return (
+                  <FadeUp key={`${rule.productA}-${rule.productB}-${index}`}>
                     <HoverCard className="bg-card rounded-xl p-5 border border-border/50">
-                      <div className="flex items-center gap-3 mb-4">
-                        <motion.div whileHover={{ scale: 1.05 }} className="px-3 py-2 bg-primary/10 rounded-lg text-primary font-medium">{rule.productA}</motion.div>
+                      <div className="flex items-center gap-3 mb-4 flex-wrap">
+                        <motion.div whileHover={{ scale: 1.05 }} className="px-3 py-2 bg-primary/10 rounded-lg text-primary font-medium text-sm">
+                          {rule.productA}
+                        </motion.div>
                         <motion.div animate={{ x: [0, 4, 0] }} transition={{ repeat: Infinity, duration: 1.5 }}>
                           <ArrowRight className="w-5 h-5 text-muted-foreground" />
                         </motion.div>
-                        <motion.div whileHover={{ scale: 1.05 }} className="px-3 py-2 bg-chart-secondary/10 rounded-lg text-chart-secondary font-medium">{rule.productB}</motion.div>
+                        <motion.div whileHover={{ scale: 1.05 }} className="px-3 py-2 bg-chart-secondary/10 rounded-lg text-chart-secondary font-medium text-sm">
+                          {rule.productB}
+                        </motion.div>
+                        <Badge variant={badge.variant} className="ml-auto text-xs">
+                          {badge.label}
+                        </Badge>
                       </div>
                       <div className="grid grid-cols-3 gap-4">
-                        <div><p className="text-xs text-muted-foreground">Support</p><p className="font-semibold text-foreground">{(rule.support * 100).toFixed(1)}%</p></div>
-                        <div><p className="text-xs text-muted-foreground">Confidence</p><p className={`font-semibold ${getConfidenceColor(rule.confidence)}`}>{(rule.confidence * 100).toFixed(1)}%</p></div>
-                        <div><p className="text-xs text-muted-foreground">Lift</p><p className="font-semibold text-foreground">{rule.lift.toFixed(2)}x</p></div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Support</p>
+                          <p className="font-semibold text-foreground">{(rule.support * 100).toFixed(1)}%</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Confidence</p>
+                          <p className={`font-semibold ${getConfidenceColor(rule.confidence)}`}>{(rule.confidence * 100).toFixed(1)}%</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Lift</p>
+                          <p className="font-semibold text-foreground">{rule.lift.toFixed(2)}x</p>
+                        </div>
                       </div>
                     </HoverCard>
                   </FadeUp>
-                ))}
-              </StaggerContainer>
-            ) : (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="chart-container text-center py-12">
-                <p className="text-muted-foreground">No associations found for "{searchQuery}". Try a different product or ensure your data includes transaction_id columns.</p>
-              </motion.div>
-            )}
+                );
+              })}
+            </StaggerContainer>
+          </motion.div>
+        ) : allRules.length > 0 && searchTerm ? (
+          <motion.div key="no-match" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="chart-container text-center py-12">
+            <Search className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+            <p className="text-muted-foreground">No associations found matching "<span className="font-medium text-foreground">{searchTerm}</span>". Try a different product name.</p>
+            <Button variant="ghost" className="mt-4" onClick={() => setSearchTerm('')}>Clear Search</Button>
+          </motion.div>
+        ) : (
+          <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="chart-container text-center py-12">
+            <ShoppingCart className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+            <p className="text-muted-foreground">No product associations could be computed. Ensure your data includes <code className="bg-muted px-1 py-0.5 rounded text-xs font-semibold">transaction_id</code> columns so the system can group purchases into baskets.</p>
           </motion.div>
         )}
       </AnimatePresence>
