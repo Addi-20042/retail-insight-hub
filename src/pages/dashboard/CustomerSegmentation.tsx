@@ -43,9 +43,6 @@ const CustomerSegmentation: React.FC = () => {
   return (
     <div className="space-y-8">
       <PageHeader title="Customer Segmentation" description="K-Means clustering analysis of customer buying patterns">
-        <Button variant="outline" size="icon" onClick={() => refetch()} disabled={isLoading}>
-          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-        </Button>
       </PageHeader>
 
       {isError && (
