@@ -13,33 +13,62 @@ export const queryKeys = {
   alerts: ['alerts'],
 };
 
-// ─── Helper: fetch all sales data ───
-const fetchSalesData = async () => {
-  const allData: any[] = [];
-  let from = 0;
-  const pageSize = 1000;
-  while (true) {
-    const { data, error } = await supabase
-      .from('sales_data')
-      .select('date, product, quantity, revenue, customer_id, transaction_id, category')
-      .order('date', { ascending: true })
-      .range(from, from + pageSize - 1);
-    if (error) throw error;
-    if (!data || data.length === 0) break;
-    allData.push(...data);
-    if (data.length < pageSize) break;
-    from += pageSize;
-  }
-  return allData;
+// ─── Offline Cache Layer ───
+const CACHE_KEY = 'retailmind_sales_cache';
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+const cacheData = (data: any[]) => {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() }));
+  } catch { /* localStorage full, ignore */ }
 };
 
-// ─── CLIENT-SIDE: Forecast (Linear Regression) ───
+const getCachedData = (): any[] | null => {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const { data, ts } = JSON.parse(raw);
+    if (Date.now() - ts > CACHE_TTL * 6) return null; // 1hr stale max
+    return data;
+  } catch { return null; }
+};
+
+// ─── Helper: fetch all sales data with offline fallback ───
+const fetchSalesData = async () => {
+  try {
+    const allData: any[] = [];
+    let from = 0;
+    const pageSize = 1000;
+    while (true) {
+      const { data, error } = await supabase
+        .from('sales_data')
+        .select('date, product, quantity, revenue, customer_id, transaction_id, category')
+        .order('date', { ascending: true })
+        .range(from, from + pageSize - 1);
+      if (error) throw error;
+      if (!data || data.length === 0) break;
+      allData.push(...data);
+      if (data.length < pageSize) break;
+      from += pageSize;
+    }
+    cacheData(allData);
+    return allData;
+  } catch (err) {
+    // Offline fallback
+    const cached = getCachedData();
+    if (cached && cached.length > 0) {
+      console.warn('Using cached data (offline mode)');
+      return cached;
+    }
+    throw err;
+  }
+};
+
+// ─── CLIENT-SIDE: Forecast (Moving Average + Trend with Seasonality) ───
 const computeForecast = (salesData: any[], days: number): ForecastResponse => {
-  // Aggregate daily revenue
   const dailyMap = new Map<string, number>();
   for (const row of salesData) {
-    const d = row.date;
-    dailyMap.set(d, (dailyMap.get(d) || 0) + Number(row.revenue));
+    dailyMap.set(row.date, (dailyMap.get(row.date) || 0) + Number(row.revenue));
   }
 
   const sorted = Array.from(dailyMap.entries()).sort(([a], [b]) => a.localeCompare(b));
@@ -47,23 +76,44 @@ const computeForecast = (salesData: any[], days: number): ForecastResponse => {
     return { data: [], total_predicted: 0, avg_daily: 0, trend: 'upward' };
   }
 
-  // Linear regression: y = slope * x + intercept
   const n = sorted.length;
-  const xs = sorted.map((_, i) => i);
   const ys = sorted.map(([, v]) => v);
+
+  // Linear trend
+  const xs = sorted.map((_, i) => i);
   const sumX = xs.reduce((a, b) => a + b, 0);
   const sumY = ys.reduce((a, b) => a + b, 0);
   const sumXY = xs.reduce((a, x, i) => a + x * ys[i], 0);
   const sumX2 = xs.reduce((a, x) => a + x * x, 0);
-
   const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
   const intercept = (sumY - slope * sumX) / n;
 
-  // Residual std dev for confidence interval
-  const residuals = ys.map((y, i) => y - (slope * xs[i] + intercept));
+  // Day-of-week seasonality factors
+  const dowTotals = new Array(7).fill(0);
+  const dowCounts = new Array(7).fill(0);
+  sorted.forEach(([dateStr, rev]) => {
+    const dow = new Date(dateStr).getDay();
+    dowTotals[dow] += rev;
+    dowCounts[dow]++;
+  });
+  const overallAvg = sumY / n;
+  const dowFactors = dowTotals.map((total, i) =>
+    dowCounts[i] > 0 ? total / dowCounts[i] / overallAvg : 1
+  );
+
+  // Residual std dev
+  const residuals = ys.map((y, i) => {
+    const dow = new Date(sorted[i][0]).getDay();
+    return y - (slope * xs[i] + intercept) * dowFactors[dow];
+  });
   const stdDev = Math.sqrt(residuals.reduce((a, r) => a + r * r, 0) / n);
 
-  // Generate future predictions from tomorrow
+  // Weighted moving average for recent trend (last 7 days)
+  const recentWindow = Math.min(7, n);
+  const recentAvg = ys.slice(-recentWindow).reduce((a, b) => a + b, 0) / recentWindow;
+  const trendAvg = slope * (n - 1) + intercept;
+  const blendWeight = 0.4; // 40% recent MA, 60% trend
+
   const today = new Date();
   const forecast: ForecastResponse['data'] = [];
   let total = 0;
@@ -72,9 +122,12 @@ const computeForecast = (salesData: any[], days: number): ForecastResponse => {
     const futureDate = new Date(today);
     futureDate.setDate(today.getDate() + i);
     const x = n + i - 1;
-    const predicted = Math.max(0, slope * x + intercept);
-    const lower = Math.max(0, predicted - 1.96 * stdDev);
-    const upper = predicted + 1.96 * stdDev;
+    const dow = futureDate.getDay();
+    const trendVal = slope * x + intercept;
+    const blended = trendVal * (1 - blendWeight) + recentAvg * blendWeight;
+    const predicted = Math.max(0, blended * dowFactors[dow]);
+    const lower = Math.max(0, predicted - 1.96 * stdDev * 0.5);
+    const upper = predicted + 1.96 * stdDev * 0.5;
     total += predicted;
     forecast.push({
       date: futureDate.toISOString().split('T')[0],
@@ -175,7 +228,6 @@ const computeSegmentation = (salesData: any[]): SegmentationResponse => {
 const computeBasket = (salesData: any[], searchProduct?: string): BasketResponse => {
   if (!salesData.length) return { rules: [], avg_confidence: 0, avg_lift: 0 };
 
-  // Group into transactions
   const txnMap = new Map<string, Set<string>>();
   for (const row of salesData) {
     const key = row.transaction_id || `${row.customer_id || 'unknown'}_${row.date}`;
@@ -183,10 +235,8 @@ const computeBasket = (salesData: any[], searchProduct?: string): BasketResponse
     txnMap.get(key)!.add(row.product);
   }
 
-  // Filter multi-product baskets
   let baskets = Array.from(txnMap.values()).filter(s => s.size > 1);
 
-  // Fallback: group by customer_id only
   if (baskets.length < 5) {
     const custMap = new Map<string, Set<string>>();
     for (const row of salesData) {
@@ -225,14 +275,12 @@ const computeBasket = (salesData: any[], searchProduct?: string): BasketResponse
 
     if (supportAB < 0.01) continue;
 
-    // A -> B
     const confAB = supportAB / supportA;
     const liftAB = confAB / supportB;
     if (confAB >= 0.05) {
       rules.push({ productA: a, productB: b, support: Math.round(supportAB * 1000) / 1000, confidence: Math.round(confAB * 1000) / 1000, lift: Math.round(liftAB * 100) / 100 });
     }
 
-    // B -> A
     const confBA = supportAB / supportB;
     const liftBA = confBA / supportA;
     if (confBA >= 0.05) {
@@ -263,7 +311,6 @@ const computeBasket = (salesData: any[], searchProduct?: string): BasketResponse
 const computeAlerts = (salesData: any[]): AlertsResponse => {
   if (!salesData.length) return { alerts: [], high_count: 0, medium_count: 0, low_count: 0 };
 
-  // Daily revenue
   const dailyMap = new Map<string, number>();
   for (const row of salesData) {
     dailyMap.set(row.date, (dailyMap.get(row.date) || 0) + Number(row.revenue));
@@ -274,7 +321,6 @@ const computeAlerts = (salesData: any[]): AlertsResponse => {
   const alerts: AlertsResponse['alerts'] = [];
   let alertId = 1;
 
-  // Z-score anomaly detection on last 30 days
   if (revenues.length >= 7) {
     const recent = revenues.slice(-30);
     const mean = recent.reduce((a, b) => a + b, 0) / recent.length;
@@ -293,7 +339,6 @@ const computeAlerts = (salesData: any[]): AlertsResponse => {
     }
   }
 
-  // Trend analysis: compare last 7 vs previous 7
   if (revenues.length >= 14) {
     const last7Avg = revenues.slice(-7).reduce((a, b) => a + b, 0) / 7;
     const prev7Avg = revenues.slice(-14, -7).reduce((a, b) => a + b, 0) / 7;
@@ -313,7 +358,6 @@ const computeAlerts = (salesData: any[]): AlertsResponse => {
     }
   }
 
-  // Top product insight
   const productRevMap = new Map<string, number>();
   for (const row of salesData) {
     productRevMap.set(row.product, (productRevMap.get(row.product) || 0) + Number(row.revenue));
@@ -323,7 +367,6 @@ const computeAlerts = (salesData: any[]): AlertsResponse => {
     alerts.push({ id: alertId++, type: 'pattern', title: 'Top Performing Product', message: `${topProduct[0]} leads with ₹${Math.round(topProduct[1]).toLocaleString()} total revenue`, timestamp: new Date().toISOString().split('T')[0], category: 'insight', severity: 'low' });
   }
 
-  // Low sales products
   const productQtyMap = new Map<string, number>();
   for (const row of salesData) {
     productQtyMap.set(row.product, (productQtyMap.get(row.product) || 0) + row.quantity);
@@ -333,8 +376,7 @@ const computeAlerts = (salesData: any[]): AlertsResponse => {
     alerts.push({ id: alertId++, type: 'warning', title: 'Low Sales Products', message: `${lowProducts.length} product(s) have sold 5 or fewer units: ${lowProducts.slice(0, 3).map(([p]) => p).join(', ')}${lowProducts.length > 3 ? '...' : ''}`, timestamp: new Date().toISOString().split('T')[0], category: 'inventory', severity: 'medium' });
   }
 
-  // Sort by severity
-  const severityOrder = { high: 0, medium: 1, low: 2 };
+  const severityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
   alerts.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
 
   return {
@@ -346,7 +388,7 @@ const computeAlerts = (salesData: any[]): AlertsResponse => {
 };
 
 // ═══════════════════════════════════════════════
-// HOOKS — All run client-side, no edge functions
+// HOOKS — All run client-side with offline fallback
 // ═══════════════════════════════════════════════
 
 export const useForecast = (days: number) => {

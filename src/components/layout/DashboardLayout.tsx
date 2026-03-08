@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createContext, useContext } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 import { Menu, Search, Keyboard, PanelLeftClose, PanelLeft } from 'lucide-react';
 import Sidebar from './Sidebar';
@@ -12,6 +12,10 @@ import { KeyboardShortcuts, useKeyboardShortcuts } from '@/components/KeyboardSh
 import AIChatAssistant from '@/components/AIChatAssistant';
 import { useAchievementChecker } from '@/hooks/useAchievementChecker';
 
+// Context to expose recheckAchievements globally
+const AchievementContext = createContext<{ recheckAchievements: () => Promise<void> }>({ recheckAchievements: async () => {} });
+export const useAchievementRecheck = () => useContext(AchievementContext);
+
 const DashboardLayout: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -20,7 +24,7 @@ const DashboardLayout: React.FC = () => {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   useKeyboardShortcuts();
-  useAchievementChecker();
+  const { recheckAchievements } = useAchievementChecker();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -144,7 +148,9 @@ const DashboardLayout: React.FC = () => {
 
         {/* Page Content */}
         <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto animate-fade-in">
-          <Outlet />
+          <AchievementContext.Provider value={{ recheckAchievements }}>
+            <Outlet />
+          </AchievementContext.Provider>
         </main>
       </div>
 

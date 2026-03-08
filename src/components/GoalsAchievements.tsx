@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAchievementRecheck } from '@/components/layout/DashboardLayout';
 
 const iconMap: Record<string, React.ReactNode> = {
   'sparkles': <Sparkles className="h-5 w-5" />,
@@ -32,6 +33,7 @@ const iconMap: Record<string, React.ReactNode> = {
 const GoalsAchievements: React.FC = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { recheckAchievements } = useAchievementRecheck();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newGoal, setNewGoal] = useState({ title: '', description: '', targetValue: 100, unit: '%', category: 'general' });
 
@@ -99,6 +101,7 @@ const GoalsAchievements: React.FC = () => {
       setDialogOpen(false);
       setNewGoal({ title: '', description: '', targetValue: 100, unit: '%', category: 'general' });
       toast.success('Goal created!');
+      recheckAchievements();
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -119,6 +122,7 @@ const GoalsAchievements: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
+      recheckAchievements();
     },
   });
 
@@ -138,6 +142,7 @@ const GoalsAchievements: React.FC = () => {
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
       if (!vars.completed) toast.success('🎉 Goal completed!');
+      recheckAchievements();
     },
   });
 

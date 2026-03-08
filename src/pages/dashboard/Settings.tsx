@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Settings as SettingsIcon, User, Bell, Database, Palette, Save, Moon, Sun, Monitor, Download,
-  Shield, Key, Smartphone, History, Trash2, AlertTriangle, Globe, Clock, FileText, LogOut, Camera
+  Shield, Key, Smartphone, History, Trash2, AlertTriangle, Clock, FileText, LogOut, Camera
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,6 @@ interface UserSettings {
   pushNotifications: boolean;
   weeklyReports: boolean;
   exportFormat: string;
-  language: string;
   timezone: string;
   twoFactorEnabled: boolean;
   sessionTimeout: string;
@@ -51,7 +50,6 @@ const Settings: React.FC = () => {
       pushNotifications: true,
       weeklyReports: false,
       exportFormat: 'pdf',
-      language: 'en',
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York',
       twoFactorEnabled: false,
       sessionTimeout: '30',
@@ -263,20 +261,6 @@ const Settings: React.FC = () => {
                       <SelectItem value="Asia/Tokyo">Tokyo (JST)</SelectItem>
                       <SelectItem value="Asia/Dubai">Dubai (GST)</SelectItem>
                       <SelectItem value="Australia/Sydney">Sydney (AEST)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Language</Label>
-                  <Select value={settings.language} onValueChange={(v) => setSettings({ ...settings, language: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="hi">हिन्दी</SelectItem>
-                      <SelectItem value="es">Español</SelectItem>
-                      <SelectItem value="fr">Français</SelectItem>
-                      <SelectItem value="de">Deutsch</SelectItem>
-                      <SelectItem value="ja">日本語</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
