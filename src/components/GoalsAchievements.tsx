@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Target, Trophy, Plus, CheckCircle2, Circle, Sparkles, 
-  TrendingUp, Users, ShoppingCart, Bell, FileText, Zap, Upload
+  TrendingUp, Users, ShoppingCart, Bell, FileText, Zap, Upload, Trash2
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,29 +12,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-
-interface Goal {
-  id: string;
-  title: string;
-  description?: string;
-  targetValue: number;
-  currentValue: number;
-  unit: string;
-  category: string;
-  dueDate?: Date;
-  completed: boolean;
-}
-
-interface Achievement {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  category: string;
-  points: number;
-  earned: boolean;
-  earnedAt?: Date;
-}
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const iconMap: Record<string, React.ReactNode> = {
   'sparkles': <Sparkles className="h-5 w-5" />,
@@ -50,64 +30,135 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 const GoalsAchievements: React.FC = () => {
-  const [goals, setGoals] = useState<Goal[]>(() => {
-    const stored = localStorage.getItem('retailmind_goals');
-    return stored ? JSON.parse(stored) : [
-      { id: '1', title: 'Generate 5 Forecasts', description: 'Create sales forecasts to unlock insights', targetValue: 5, currentValue: 2, unit: 'forecasts', category: 'analytics', completed: false },
-      { id: '2', title: 'Upload First Dataset', description: 'Import your sales data for analysis', targetValue: 1, currentValue: 0, unit: 'uploads', category: 'data', completed: false },
-      { id: '3', title: 'Resolve 3 Alerts', description: 'Address smart alerts in your dashboard', targetValue: 3, currentValue: 1, unit: 'alerts', category: 'operations', completed: false },
-    ];
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [newGoal, setNewGoal] = useState({ title: '', description: '', targetValue: 100, unit: '%', category: 'general' });
+
+  // Fetch goals from Supabase
+  const { data: goals = [], isLoading: goalsLoading } = useQuery({
+    queryKey: ['goals', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('goals')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
   });
 
-  const [achievements] = useState<Achievement[]>([
-    { id: '1', name: 'First Login', description: 'Complete your first login', icon: 'sparkles', category: 'onboarding', points: 10, earned: true, earnedAt: new Date() },
-    { id: '2', name: 'Data Pioneer', description: 'Upload your first dataset', icon: 'upload', category: 'data', points: 25, earned: false },
-    { id: '3', name: 'Forecast Master', description: 'Generate 10 sales forecasts', icon: 'trending-up', category: 'analytics', points: 50, earned: false },
-    { id: '4', name: 'Segment Explorer', description: 'Analyze 5 customer segments', icon: 'users', category: 'analytics', points: 40, earned: false },
-    { id: '5', name: 'Basket Analyst', description: 'Run 3 market basket analyses', icon: 'shopping-cart', category: 'analytics', points: 30, earned: false },
-    { id: '6', name: 'Alert Guardian', description: 'Resolve 10 smart alerts', icon: 'bell', category: 'operations', points: 35, earned: false },
-    { id: '7', name: 'Report Builder', description: 'Export 5 PDF reports', icon: 'file-text', category: 'reporting', points: 25, earned: false },
-    { id: '8', name: 'Goal Setter', description: 'Create your first goal', icon: 'target', category: 'goals', points: 15, earned: true, earnedAt: new Date() },
-    { id: '9', name: 'Goal Crusher', description: 'Complete 5 goals', icon: 'trophy', category: 'goals', points: 75, earned: false },
-    { id: '10', name: 'Power User', description: 'Use the app for 7 consecutive days', icon: 'zap', category: 'engagement', points: 100, earned: false },
-  ]);
+  // Fetch achievements from Supabase
+  const { data: achievements = [] } = useQuery({
+    queryKey: ['achievements'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('achievements')
+        .select('*')
+        .order('points', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
 
-  const [newGoal, setNewGoal] = useState({ title: '', description: '', targetValue: 100, unit: '%', category: 'general' });
-  const [dialogOpen, setDialogOpen] = useState(false);
+  // Fetch user earned achievements
+  const { data: earnedAchievements = [] } = useQuery({
+    queryKey: ['user_achievements', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('user_achievements')
+        .select('*, achievements(*)');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
 
-  const totalPoints = achievements.filter(a => a.earned).reduce((sum, a) => sum + a.points, 0);
-  const earnedCount = achievements.filter(a => a.earned).length;
+  const earnedIds = new Set(earnedAchievements.map((ea: any) => ea.achievement_id));
 
-  const handleAddGoal = () => {
-    if (!newGoal.title.trim()) return;
-    
-    const goal: Goal = {
-      id: `goal_${Date.now()}`,
-      ...newGoal,
-      currentValue: 0,
-      completed: false,
-    };
-    
-    const updated = [...goals, goal];
-    setGoals(updated);
-    localStorage.setItem('retailmind_goals', JSON.stringify(updated));
-    setNewGoal({ title: '', description: '', targetValue: 100, unit: '%', category: 'general' });
-    setDialogOpen(false);
-    toast.success('Goal created!');
-  };
+  // Create goal mutation
+  const createGoal = useMutation({
+    mutationFn: async (goal: typeof newGoal) => {
+      if (!user) throw new Error('Not authenticated');
+      const { error } = await supabase.from('goals').insert({
+        user_id: user.id,
+        title: goal.title,
+        description: goal.description || null,
+        target_value: goal.targetValue,
+        current_value: 0,
+        unit: goal.unit,
+        category: goal.category,
+        completed: false,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['goals'] });
+      setDialogOpen(false);
+      setNewGoal({ title: '', description: '', targetValue: 100, unit: '%', category: 'general' });
+      toast.success('Goal created!');
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
 
-  const toggleGoalComplete = (id: string) => {
-    const updated = goals.map(g => {
-      if (g.id === id) {
-        const completed = !g.completed;
-        if (completed) toast.success('🎉 Goal completed!');
-        return { ...g, completed, currentValue: completed ? g.targetValue : g.currentValue };
-      }
-      return g;
-    });
-    setGoals(updated);
-    localStorage.setItem('retailmind_goals', JSON.stringify(updated));
-  };
+  // Update goal progress mutation
+  const updateGoalProgress = useMutation({
+    mutationFn: async ({ id, currentValue, targetValue }: { id: string; currentValue: number; targetValue: number }) => {
+      const completed = currentValue >= targetValue;
+      const { error } = await supabase
+        .from('goals')
+        .update({ 
+          current_value: currentValue, 
+          completed,
+          completed_at: completed ? new Date().toISOString() : null,
+        })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['goals'] });
+    },
+  });
+
+  // Toggle goal complete
+  const toggleGoal = useMutation({
+    mutationFn: async ({ id, completed, targetValue }: { id: string; completed: boolean; targetValue: number }) => {
+      const { error } = await supabase
+        .from('goals')
+        .update({ 
+          completed: !completed,
+          current_value: !completed ? targetValue : 0,
+          completed_at: !completed ? new Date().toISOString() : null,
+        })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['goals'] });
+      if (!vars.completed) toast.success('🎉 Goal completed!');
+    },
+  });
+
+  // Delete goal mutation
+  const deleteGoal = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('goals').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['goals'] });
+      toast.success('Goal deleted');
+    },
+  });
+
+  const totalPoints = earnedAchievements.reduce((sum: number, ea: any) => {
+    const ach = achievements.find((a: any) => a.id === ea.achievement_id);
+    return sum + (ach?.points || 0);
+  }, 0);
+  const earnedCount = earnedAchievements.length;
+  const completedGoals = goals.filter((g: any) => g.completed).length;
 
   return (
     <div className="space-y-6">
@@ -148,7 +199,7 @@ const GoalsAchievements: React.FC = () => {
                 <Target className="h-6 w-6 text-warning" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{goals.filter(g => g.completed).length}/{goals.length}</p>
+                <p className="text-2xl font-bold text-foreground">{completedGoals}/{goals.length}</p>
                 <p className="text-sm text-muted-foreground">Goals Complete</p>
               </div>
             </div>
@@ -182,7 +233,7 @@ const GoalsAchievements: React.FC = () => {
                   <Input 
                     value={newGoal.title} 
                     onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })}
-                    placeholder="e.g., Generate 10 forecasts"
+                    placeholder="e.g., Increase monthly revenue by 20%"
                   />
                 </div>
                 <div className="space-y-2">
@@ -207,7 +258,7 @@ const GoalsAchievements: React.FC = () => {
                     <Input 
                       value={newGoal.unit} 
                       onChange={(e) => setNewGoal({ ...newGoal, unit: e.target.value })}
-                      placeholder="e.g., %, forecasts, uploads"
+                      placeholder="e.g., %, ₹, uploads"
                     />
                   </div>
                 </div>
@@ -224,46 +275,88 @@ const GoalsAchievements: React.FC = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button onClick={handleAddGoal} className="w-full">Create Goal</Button>
+                <Button 
+                  onClick={() => createGoal.mutate(newGoal)} 
+                  className="w-full"
+                  disabled={createGoal.isPending || !newGoal.title.trim()}
+                >
+                  {createGoal.isPending ? 'Creating...' : 'Create Goal'}
+                </Button>
               </div>
             </DialogContent>
           </Dialog>
         </CardHeader>
         <CardContent className="space-y-4">
-          {goals.map((goal) => (
-            <div 
-              key={goal.id}
-              className={`p-4 rounded-lg border transition-all ${goal.completed ? 'bg-success/5 border-success/30' : 'border-border hover:border-primary/30'}`}
-            >
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-start gap-3">
-                  <button onClick={() => toggleGoalComplete(goal.id)}>
-                    {goal.completed ? (
-                      <CheckCircle2 className="h-5 w-5 text-success mt-0.5" />
-                    ) : (
-                      <Circle className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    )}
-                  </button>
-                  <div>
-                    <p className={`font-medium ${goal.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-                      {goal.title}
-                    </p>
-                    {goal.description && (
-                      <p className="text-sm text-muted-foreground">{goal.description}</p>
-                    )}
+          {goalsLoading ? (
+            <div className="text-center py-8 text-muted-foreground">Loading goals...</div>
+          ) : goals.length === 0 ? (
+            <div className="text-center py-8">
+              <Target className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground">No goals yet</p>
+              <p className="text-sm text-muted-foreground">Create your first goal to start tracking progress</p>
+            </div>
+          ) : (
+            goals.map((goal: any) => {
+              const progress = goal.target_value > 0 ? (Number(goal.current_value) / Number(goal.target_value)) * 100 : 0;
+              return (
+                <div 
+                  key={goal.id}
+                  className={`p-4 rounded-lg border transition-all ${goal.completed ? 'bg-success/5 border-success/30' : 'border-border hover:border-primary/30'}`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-start gap-3">
+                      <button onClick={() => toggleGoal.mutate({ id: goal.id, completed: goal.completed, targetValue: Number(goal.target_value) })}>
+                        {goal.completed ? (
+                          <CheckCircle2 className="h-5 w-5 text-success mt-0.5" />
+                        ) : (
+                          <Circle className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        )}
+                      </button>
+                      <div>
+                        <p className={`font-medium ${goal.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                          {goal.title}
+                        </p>
+                        {goal.description && (
+                          <p className="text-sm text-muted-foreground">{goal.description}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{goal.category}</Badge>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-7 w-7 text-destructive"
+                        onClick={() => { if (confirm('Delete this goal?')) deleteGoal.mutate(goal.id); }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="ml-8">
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span className="text-muted-foreground">Progress</span>
+                      <div className="flex items-center gap-2">
+                        {!goal.completed && (
+                          <Input
+                            type="number"
+                            className="h-6 w-16 text-xs text-center"
+                            value={Number(goal.current_value)}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value) || 0;
+                              updateGoalProgress.mutate({ id: goal.id, currentValue: val, targetValue: Number(goal.target_value) });
+                            }}
+                          />
+                        )}
+                        <span className="font-medium">{Number(goal.current_value)}/{Number(goal.target_value)} {goal.unit}</span>
+                      </div>
+                    </div>
+                    <Progress value={Math.min(progress, 100)} className="h-2" />
                   </div>
                 </div>
-                <Badge variant="outline">{goal.category}</Badge>
-              </div>
-              <div className="ml-8">
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span className="text-muted-foreground">Progress</span>
-                  <span className="font-medium">{goal.currentValue}/{goal.targetValue} {goal.unit}</span>
-                </div>
-                <Progress value={(goal.currentValue / goal.targetValue) * 100} className="h-2" />
-              </div>
-            </div>
-          ))}
+              );
+            })
+          )}
         </CardContent>
       </Card>
 
@@ -277,34 +370,44 @@ const GoalsAchievements: React.FC = () => {
           <CardDescription>Unlock badges as you explore RetailMind</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {achievements.map((achievement) => (
-              <div
-                key={achievement.id}
-                className={`relative p-4 rounded-xl border text-center transition-all ${
-                  achievement.earned 
-                    ? 'bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30' 
-                    : 'bg-muted/30 border-border opacity-60'
-                }`}
-              >
-                <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-2 ${
-                  achievement.earned ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
-                }`}>
-                  {iconMap[achievement.icon] || <Trophy className="h-5 w-5" />}
-                </div>
-                <p className="font-medium text-sm text-foreground">{achievement.name}</p>
-                <p className="text-xs text-muted-foreground mt-1">{achievement.description}</p>
-                <Badge className="mt-2" variant={achievement.earned ? "default" : "secondary"}>
-                  {achievement.points} pts
-                </Badge>
-                {achievement.earned && (
-                  <div className="absolute -top-1 -right-1">
-                    <CheckCircle2 className="h-5 w-5 text-success fill-success/20" />
+          {achievements.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+              <p>No achievements configured yet</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {achievements.map((achievement: any) => {
+                const isEarned = earnedIds.has(achievement.id);
+                return (
+                  <div
+                    key={achievement.id}
+                    className={`relative p-4 rounded-xl border text-center transition-all ${
+                      isEarned 
+                        ? 'bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30' 
+                        : 'bg-muted/30 border-border opacity-60'
+                    }`}
+                  >
+                    <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-2 ${
+                      isEarned ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {iconMap[achievement.icon] || <Trophy className="h-5 w-5" />}
+                    </div>
+                    <p className="font-medium text-sm text-foreground">{achievement.name}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{achievement.description}</p>
+                    <Badge className="mt-2" variant={isEarned ? "default" : "secondary"}>
+                      {achievement.points} pts
+                    </Badge>
+                    {isEarned && (
+                      <div className="absolute -top-1 -right-1">
+                        <CheckCircle2 className="h-5 w-5 text-success fill-success/20" />
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

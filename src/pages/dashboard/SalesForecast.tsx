@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, Line, ComposedChart, Legend
 } from 'recharts';
-import { Calendar, TrendingUp, TrendingDown, RefreshCw, Download, AlertCircle } from 'lucide-react';
+import { Calendar, TrendingUp, TrendingDown, RefreshCw, Download, AlertCircle, BarChart3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,9 +21,33 @@ const SalesForecast: React.FC = () => {
   const { data, isLoading, isError, refetch } = useForecast(parseInt(forecastDays));
   const { data: hasData, isLoading: checkingData } = useHasSalesData();
   const forecastData = data?.data || [];
+  const historical = (data as any)?.historical || [];
   const totalPredicted = data?.total_predicted || 0;
   const avgDaily = data?.avg_daily || 0;
   const trend = data?.trend === 'upward';
+
+  // Combine historical + forecast for the chart
+  const chartData = useMemo(() => {
+    const hist = historical.map((h: any) => ({
+      date: h.date,
+      actual: h.actual,
+      predicted: null,
+      lower: null,
+      upper: null,
+    }));
+    const forecast = forecastData.map((f: any) => ({
+      date: f.date,
+      actual: null,
+      predicted: f.predicted,
+      lower: f.lower,
+      upper: f.upper,
+    }));
+    // Add a bridge point: last historical + first forecast predicted
+    if (hist.length > 0 && forecast.length > 0) {
+      hist[hist.length - 1].predicted = hist[hist.length - 1].actual;
+    }
+    return [...hist, ...forecast];
+  }, [historical, forecastData]);
 
   if (!hasData && !checkingData) {
     return (
@@ -126,30 +150,53 @@ const SalesForecast: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="text-lg font-semibold text-foreground">Forecast Chart</h3>
-            <p className="text-sm text-muted-foreground">Predicted sales with confidence interval</p>
+            <p className="text-sm text-muted-foreground">Historical sales with predicted forecast and confidence interval</p>
+          </div>
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-[hsl(221,83%,53%)] rounded"></span>Actual</span>
+            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-[hsl(168,76%,42%)] rounded"></span>Predicted</span>
+            <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-[hsl(168,76%,42%)]/10 rounded-sm border border-[hsl(168,76%,42%)]/30"></span>Confidence</span>
           </div>
         </div>
         {isLoading ? (
           <ChartSkeleton height="h-[400px]" />
-        ) : forecastData.length === 0 ? (
+        ) : chartData.length === 0 ? (
           <div className="h-[400px] flex items-center justify-center text-muted-foreground">No forecast data available</div>
         ) : (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.6 }}>
             <ResponsiveContainer width="100%" height={400}>
-              <AreaChart data={forecastData}>
+              <ComposedChart data={chartData}>
                 <defs>
                   <linearGradient id="colorForecast" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="hsl(168, 76%, 42%)" stopOpacity={0.3}/>
                     <stop offset="95%" stopColor="hsl(168, 76%, 42%)" stopOpacity={0}/>
                   </linearGradient>
+                  <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(221, 83%, 53%)" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="hsl(221, 83%, 53%)" stopOpacity={0}/>
+                  </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
-                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} formatter={(value: number, name: string) => [`₹${value.toLocaleString('en-IN')}`, name === 'predicted' ? 'Predicted' : name === 'upper' ? 'Upper Bound' : 'Lower Bound']} />
-                <Area type="monotone" dataKey="upper" stroke="transparent" fill="hsl(168, 76%, 42%)" fillOpacity={0.08} />
-                <Area type="monotone" dataKey="predicted" stroke="hsl(168, 76%, 42%)" strokeWidth={2.5} fill="url(#colorForecast)" />
-              </AreaChart>
+                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => { const d = new Date(v); return `${d.getDate()}/${d.getMonth()+1}`; }} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} 
+                  formatter={(value: number | null, name: string) => {
+                    if (value === null) return ['-', name];
+                    const label = name === 'actual' ? 'Actual Sales' : name === 'predicted' ? 'Predicted' : name === 'upper' ? 'Upper Bound' : 'Lower Bound';
+                    return [`₹${value.toLocaleString('en-IN')}`, label];
+                  }}
+                  labelFormatter={(label) => `Date: ${label}`}
+                />
+                {/* Confidence band: upper area */}
+                <Area type="monotone" dataKey="upper" stroke="hsl(168, 76%, 42%)" strokeWidth={1} strokeDasharray="4 4" fill="hsl(168, 76%, 42%)" fillOpacity={0.08} connectNulls={false} />
+                {/* Confidence band: lower area */}
+                <Area type="monotone" dataKey="lower" stroke="hsl(168, 76%, 42%)" strokeWidth={1} strokeDasharray="4 4" fill="hsl(var(--background))" fillOpacity={1} connectNulls={false} />
+                {/* Historical actual line */}
+                <Area type="monotone" dataKey="actual" stroke="hsl(221, 83%, 53%)" strokeWidth={2.5} fill="url(#colorActual)" connectNulls={false} />
+                {/* Predicted line */}
+                <Line type="monotone" dataKey="predicted" stroke="hsl(168, 76%, 42%)" strokeWidth={2.5} dot={{ fill: 'hsl(168, 76%, 42%)', r: 3 }} connectNulls={false} />
+              </ComposedChart>
             </ResponsiveContainer>
           </motion.div>
         )}

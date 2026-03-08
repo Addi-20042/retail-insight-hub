@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -35,12 +35,11 @@ serve(async (req) => {
     const url = new URL(req.url);
     const days = Math.min(Math.max(parseInt(url.searchParams.get("days") || "7"), 1), 30);
 
-    // Fetch ONLY what's needed — date + revenue, limit to last 365 days for speed
+    // Fetch ALL sales data aggregated by date
     const { data: salesData, error: dbError } = await supabase
       .from("sales_data")
       .select("date, revenue")
-      .order("date", { ascending: true })
-      .limit(1000);
+      .order("date", { ascending: true });
 
     if (dbError) throw dbError;
 
@@ -69,7 +68,7 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Simple linear regression on day index vs revenue
+    // Linear regression on day index vs revenue
     const n = dailyData.length;
     const xs = dailyData.map((_, i) => i);
     const ys = dailyData.map(d => d.revenue);
@@ -86,20 +85,21 @@ serve(async (req) => {
     const slope = denominator !== 0 ? numerator / denominator : 0;
     const intercept = meanY - slope * meanX;
 
-    // Calculate standard deviation of residuals for confidence interval
+    // Standard deviation of residuals for confidence interval
     const residuals = ys.map((y, i) => y - (slope * xs[i] + intercept));
     const stdDev = Math.sqrt(residuals.reduce((sum, r) => sum + r * r, 0) / Math.max(n - 2, 1));
 
-    // Generate forecast
-    const lastDate = new Date(dailyData[dailyData.length - 1].date);
+    // Generate forecast starting from TODAY, not from last data date
+    const today = new Date();
     const forecasts = [];
 
-    for (let i = 1; i <= days; i++) {
-      const futureDate = new Date(lastDate);
-      futureDate.setDate(futureDate.getDate() + i);
-      const x = n - 1 + i;
+    for (let i = 0; i < days; i++) {
+      const futureDate = new Date(today);
+      futureDate.setDate(futureDate.getDate() + i + 1);
+      const x = n + i;
       const predicted = Math.max(0, slope * x + intercept);
-      const margin = stdDev * 1.5;
+      // Wider confidence interval further out
+      const margin = stdDev * (1.5 + i * 0.1);
 
       forecasts.push({
         date: futureDate.toISOString().split("T")[0],
@@ -113,11 +113,20 @@ serve(async (req) => {
     const avgDaily = Math.round((totalPredicted / days) * 100) / 100;
     const trend = slope >= 0 ? "upward" : "downward";
 
+    // Include recent historical data for chart context
+    const recentDays = Math.min(14, dailyData.length);
+    const historical = dailyData.slice(-recentDays).map(d => ({
+      date: d.date,
+      actual: Math.round(d.revenue * 100) / 100,
+    }));
+
     return new Response(JSON.stringify({
       data: forecasts,
+      historical,
       total_predicted: totalPredicted,
       avg_daily: avgDaily,
       trend,
+      data_points: n,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (error) {
