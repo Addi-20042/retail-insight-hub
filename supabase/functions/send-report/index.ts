@@ -164,23 +164,24 @@ serve(async (req) => {
     </body>
     </html>`;
 
-    const emailResponse = await fetch("https://api.resend.com/emails", {
+    const emailResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "api-key": BREVO_API_KEY,
         "Content-Type": "application/json",
+        "Accept": "application/json",
       },
       body: JSON.stringify({
-        from: "RetailMind <onboarding@resend.dev>",
-        to: sanitizedRecipients,
+        sender: { name: "RetailMind", email: "noreply@retailmind.app" },
+        to: sanitizedRecipients.map((email: string) => ({ email })),
         subject: `${reportTitle} - ${new Date().toLocaleDateString()}`,
-        html: htmlContent,
+        htmlContent: htmlContent,
       }),
     });
 
     if (!emailResponse.ok) {
       const errorData = await emailResponse.text();
-      console.error("Resend error:", errorData);
+      console.error("Brevo error:", errorData);
       throw new Error(`Failed to send email: ${emailResponse.status}`);
     }
 
