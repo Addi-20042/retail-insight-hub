@@ -42,10 +42,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       if (session?.user) {
         setUser(mapSupabaseUser(session.user));
+        
+        // Send welcome/return email on sign in
+        if (event === 'SIGNED_IN') {
+          supabase.functions.invoke('login-email', {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          }).catch((err) => console.error('Login email error:', err));
+        }
       } else {
         setUser(null);
       }
