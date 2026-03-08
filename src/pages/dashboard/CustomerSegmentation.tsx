@@ -4,11 +4,12 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recha
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useSegmentation } from '@/hooks/useApiData';
-import { useSalesData } from '@/hooks/useSupabaseData';
+import { useSalesData, useSalesStats } from '@/hooks/useSupabaseData';
 import { EmptyState } from '@/components/EmptyState';
 import { 
-  StaggerContainer, FadeUp, PageHeader, StatCardSkeleton, ChartSkeleton, TableSkeleton, HoverCard
+  StaggerContainer, FadeUp, PageHeader, StatCardSkeleton, ChartSkeleton, TableSkeleton, HoverCard, ShimmerSkeleton
 } from '@/components/ui/animated-container';
+import CategoryTreemap from '@/components/charts/CategoryTreemap';
 
 const CustomerSegmentation: React.FC = () => {
   const { data, isLoading, isError, refetch } = useSegmentation();
