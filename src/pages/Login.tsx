@@ -11,6 +11,7 @@ import { ForgotPasswordModal } from '@/components/ForgotPasswordModal';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable/index';
+import { loginSchema, signupSchema } from '@/lib/validations';
 
 const Login: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -21,6 +22,7 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Handle OAuth redirect
   useEffect(() => {
@@ -52,18 +54,29 @@ const Login: React.FC = () => {
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      toast.error('Please fill in all fields');
-      return;
-    }
+    setFieldErrors({});
 
+    // Validate with Zod
     if (authMode === 'signup') {
-      if (password !== confirmPassword) {
-        toast.error('Passwords do not match');
+      const result = signupSchema.safeParse({ email, password, confirmPassword });
+      if (!result.success) {
+        const errors: Record<string, string> = {};
+        result.error.errors.forEach(err => {
+          if (err.path[0]) errors[err.path[0] as string] = err.message;
+        });
+        setFieldErrors(errors);
+        toast.error(Object.values(errors)[0]);
         return;
       }
-      if (password.length < 8) {
-        toast.error('Password must be at least 8 characters');
+    } else {
+      const result = loginSchema.safeParse({ email, password });
+      if (!result.success) {
+        const errors: Record<string, string> = {};
+        result.error.errors.forEach(err => {
+          if (err.path[0]) errors[err.path[0] as string] = err.message;
+        });
+        setFieldErrors(errors);
+        toast.error(Object.values(errors)[0]);
         return;
       }
     }
@@ -200,9 +213,11 @@ const Login: React.FC = () => {
                     placeholder="name@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    className={`pl-10 ${fieldErrors.email ? 'border-destructive' : ''}`}
+                    maxLength={255}
                   />
                 </div>
+                {fieldErrors.email && <p className="text-xs text-destructive">{fieldErrors.email}</p>}
               </div>
 
               <div className="space-y-2">
@@ -226,7 +241,8 @@ const Login: React.FC = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10"
+                    className={`pl-10 pr-10 ${fieldErrors.password ? 'border-destructive' : ''}`}
+                    maxLength={128}
                   />
                   <Button
                     type="button"
@@ -238,6 +254,7 @@ const Login: React.FC = () => {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 </div>
+                {fieldErrors.password && <p className="text-xs text-destructive">{fieldErrors.password}</p>}
               </div>
 
               {authMode === 'signup' && (
@@ -251,9 +268,11 @@ const Login: React.FC = () => {
                       placeholder="••••••••"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="pl-10"
+                      className={`pl-10 ${fieldErrors.confirmPassword ? 'border-destructive' : ''}`}
+                      maxLength={128}
                     />
                   </div>
+                  {fieldErrors.confirmPassword && <p className="text-xs text-destructive">{fieldErrors.confirmPassword}</p>}
                   <p className="text-xs text-muted-foreground">
                     Must be at least 8 characters with uppercase, lowercase, and number
                   </p>
@@ -278,7 +297,7 @@ const Login: React.FC = () => {
               </span>
               <button
                 type="button"
-                onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
+                onClick={() => { setAuthMode(authMode === 'login' ? 'signup' : 'login'); setFieldErrors({}); }}
                 className="text-primary hover:underline font-medium"
               >
                 {authMode === 'login' ? 'Sign up' : 'Sign in'}

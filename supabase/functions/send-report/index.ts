@@ -3,8 +3,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const VALID_REPORT_TYPES = ["sales_forecast", "customer_segments", "basket_analysis", "smart_alerts"];
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -39,15 +42,36 @@ serve(async (req) => {
       });
     }
 
-    const { reportType, recipients, reportName } = await req.json();
+    const body = await req.json();
+    const { reportType, recipients, reportName } = body;
 
-    if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
-      return new Response(JSON.stringify({ error: "No recipients specified" }), {
+    // Validate reportType
+    if (!reportType || !VALID_REPORT_TYPES.includes(reportType)) {
+      return new Response(JSON.stringify({ error: `Invalid report type. Must be one of: ${VALID_REPORT_TYPES.join(", ")}` }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
-    // Fetch summary data based on report type
+    // Validate recipients
+    if (!recipients || !Array.isArray(recipients) || recipients.length === 0 || recipients.length > 10) {
+      return new Response(JSON.stringify({ error: "Provide 1-10 email recipients" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    const sanitizedRecipients = recipients
+      .map((r: unknown) => typeof r === "string" ? r.trim().substring(0, 255) : "")
+      .filter((r: string) => EMAIL_REGEX.test(r));
+
+    if (sanitizedRecipients.length === 0) {
+      return new Response(JSON.stringify({ error: "No valid email addresses provided" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    const sanitizedName = typeof reportName === "string" ? reportName.trim().substring(0, 200) : "";
+
+    // Fetch summary data
     const { data: salesData } = await supabase
       .from("sales_data")
       .select("date, product, quantity, revenue, category")
@@ -61,8 +85,7 @@ serve(async (req) => {
     const dates = rows.map(r => r.date).sort();
     const dateRange = dates.length > 0 ? `${dates[0]} to ${dates[dates.length - 1]}` : "No data";
 
-    // Build HTML email content
-    const reportTitle = reportName || `RetailMind ${reportType} Report`;
+    const reportTitle = sanitizedName || `RetailMind ${reportType} Report`;
     const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -83,7 +106,7 @@ serve(async (req) => {
     <body>
       <div class="container">
         <div class="header">
-          <h1>📊 ${reportTitle}</h1>
+          <h1>📊 ${reportTitle.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</h1>
           <p>Generated on ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
         </div>
         <div class="content">
@@ -93,7 +116,7 @@ serve(async (req) => {
           <div class="stats-grid">
             <div class="stat-card">
               <div class="label">Total Revenue</div>
-              <div class="value">$${totalRevenue.toLocaleString()}</div>
+              <div class="value">₹${totalRevenue.toLocaleString()}</div>
             </div>
             <div class="stat-card">
               <div class="label">Units Sold</div>
@@ -141,7 +164,6 @@ serve(async (req) => {
     </body>
     </html>`;
 
-    // Send email via Resend
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -150,7 +172,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: "RetailMind <onboarding@resend.dev>",
-        to: recipients,
+        to: sanitizedRecipients,
         subject: `${reportTitle} - ${new Date().toLocaleDateString()}`,
         html: htmlContent,
       }),
@@ -164,7 +186,6 @@ serve(async (req) => {
 
     const emailResult = await emailResponse.json();
 
-    // Update scheduled report last_sent_at
     await supabase
       .from("scheduled_reports")
       .update({ last_sent_at: new Date().toISOString() })
@@ -173,7 +194,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
-      message: `Report sent to ${recipients.length} recipient(s)`,
+      message: `Report sent to ${sanitizedRecipients.length} recipient(s)`,
       emailId: emailResult.id,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
