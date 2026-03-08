@@ -67,7 +67,7 @@ const SalesForecast: React.FC = () => {
   return (
     <div className="space-y-8">
       <PageHeader title="Sales Forecast" description="AI-powered demand prediction using regression models">
-        <Button variant="outline" size="icon" onClick={() => { exportForecastToPdf({ days: forecastDays, accuracy: '94.2%', total: `₹${totalPredicted.toLocaleString('en-IN')}` }); toast.success('PDF exported'); }} title="Export to PDF">
+        <Button variant="outline" size="icon" onClick={async () => { await exportForecastToPdf({ days: forecastDays, accuracy: '94.2%', total: `₹${totalPredicted.toLocaleString('en-IN')}`, avgDaily: `₹${avgDaily.toLocaleString('en-IN')}`, trend: trend ? 'Upward' : 'Downward', forecastRows: forecastData }); toast.success('PDF exported with chart & data'); }} title="Export to PDF">
           <Download className="w-4 h-4" />
         </Button>
         <Button variant="outline" size="icon" onClick={() => refetch()} disabled={isLoading}>
