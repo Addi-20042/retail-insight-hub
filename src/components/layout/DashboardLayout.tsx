@@ -10,6 +10,7 @@ import { QuickNotes } from '@/components/QuickNotes';
 import { CommandPalette } from '@/components/CommandPalette';
 import { KeyboardShortcuts, useKeyboardShortcuts } from '@/components/KeyboardShortcuts';
 import AIChatAssistant from '@/components/AIChatAssistant';
+import { useAchievementChecker } from '@/hooks/useAchievementChecker';
 
 const DashboardLayout: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -19,6 +20,7 @@ const DashboardLayout: React.FC = () => {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   useKeyboardShortcuts();
+  useAchievementChecker();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -55,7 +57,7 @@ const DashboardLayout: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Desktop Sidebar — fixed, never scrolls */}
+      {/* Desktop Sidebar */}
       <div
         className={`hidden lg:block fixed left-0 top-0 h-screen z-30 transition-transform duration-300 ${
           sidebarCollapsed ? '-translate-x-64' : 'translate-x-0'
@@ -71,7 +73,7 @@ const DashboardLayout: React.FC = () => {
         </SheetContent>
       </Sheet>
 
-      {/* Main Content Area — offset by sidebar width on desktop */}
+      {/* Main Content Area */}
       <div
         className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${
           sidebarCollapsed ? 'lg:pl-0' : 'lg:pl-64'
@@ -99,7 +101,6 @@ const DashboardLayout: React.FC = () => {
         <header className="hidden lg:flex sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
           <div className="flex items-center justify-between h-14 px-6 w-full">
             <div className="flex items-center gap-3">
-              {/* Hamburger to collapse/expand desktop sidebar */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -114,7 +115,6 @@ const DashboardLayout: React.FC = () => {
                 )}
               </Button>
 
-              {/* Search / Command Palette Trigger */}
               <button
                 onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
                 className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground bg-muted/50 rounded-lg hover:bg-muted transition-colors"
@@ -143,18 +143,13 @@ const DashboardLayout: React.FC = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto animate-fade-in">
+        <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto animate-fade-in">
           <Outlet />
         </main>
       </div>
 
-      {/* Command Palette */}
       <CommandPalette onOpenNotes={() => setNotesOpen(true)} />
-
-      {/* Keyboard Shortcuts Dialog */}
       <KeyboardShortcuts open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
-
-      {/* AI Chat Assistant */}
       <AIChatAssistant />
     </div>
   );
