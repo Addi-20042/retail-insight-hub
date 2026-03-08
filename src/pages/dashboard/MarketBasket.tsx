@@ -26,6 +26,11 @@ const MarketBasket: React.FC = () => {
   const handleKeyPress = (e: React.KeyboardEvent) => { if (e.key === 'Enter') handleSearch(); };
   const getConfidenceColor = (c: number) => c >= 0.8 ? 'text-success' : c >= 0.6 ? 'text-warning' : 'text-muted-foreground';
 
+  // Check if data has transaction_id or customer_id
+  const hasTransactionIds = salesData?.some(row => row.transaction_id && row.transaction_id.trim() !== '') ?? false;
+  const hasCustomerIds = salesData?.some(row => row.customer_id && row.customer_id.trim() !== '') ?? false;
+  const lacksGroupingData = hasData && !hasTransactionIds && !hasCustomerIds;
+
   if (!hasData) {
     return (
       <div className="space-y-8">
@@ -40,6 +45,25 @@ const MarketBasket: React.FC = () => {
   return (
     <div className="space-y-8">
       <PageHeader title="Market Basket Analysis" description="Discover products frequently purchased together using Association Rule Mining" />
+
+      {/* Warning: missing transaction grouping data */}
+      {lacksGroupingData && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-warning/10 border border-warning/30 rounded-xl p-4 flex items-start gap-3"
+        >
+          <AlertCircle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+          <div>
+            <p className="text-foreground font-medium text-sm">Limited Analysis Accuracy</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Your data doesn't include <code className="bg-muted px-1 py-0.5 rounded text-xs font-semibold">transaction_id</code> or <code className="bg-muted px-1 py-0.5 rounded text-xs font-semibold">customer_id</code> columns. 
+              Without these, the system cannot determine which products were purchased together. 
+              Re-upload your CSV with these columns for accurate results.
+            </p>
+          </div>
+        </motion.div>
+      )}
 
       {/* Search */}
       <motion.div

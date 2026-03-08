@@ -244,7 +244,7 @@ export const useAddSalesEntry = () => {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async (entry: { date: string; product: string; quantity: number; revenue: number; category?: string }) => {
+    mutationFn: async (entry: { date: string; product: string; quantity: number; revenue: number; category?: string; transaction_id?: string; customer_id?: string }) => {
       if (!user) throw new Error('Not authenticated');
       const { error } = await supabase.from('sales_data').insert({ ...entry, user_id: user.id });
       if (error) throw error;
