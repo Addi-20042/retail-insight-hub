@@ -87,7 +87,7 @@ const CategoryTreemap: React.FC<CategoryTreemapProps> = ({ data }) => {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: 0.3, duration: 0.5 }}
     >
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={250}>
         <Treemap
           data={treemapData}
           dataKey="size"

@@ -184,9 +184,9 @@ const RevenueHeatmap: React.FC<RevenueHeatmapProps> = ({ data }) => {
       )}
 
       {/* Month labels */}
-      <div className="flex gap-0.5 overflow-x-auto">
+      <div className="flex gap-0.5 overflow-hidden">
         <div className="w-[26px] shrink-0" />
-        <div className="flex gap-0.5 relative w-full">
+        <div className="flex gap-0.5 relative flex-1 min-w-0">
           {monthLabels.map((ml, i) => (
             <span
               key={i}
@@ -200,7 +200,7 @@ const RevenueHeatmap: React.FC<RevenueHeatmapProps> = ({ data }) => {
       </div>
 
       {/* Heatmap grid */}
-      <div className="flex gap-0.5 overflow-x-auto">
+      <div className="flex gap-0.5 overflow-x-auto no-scrollbar pb-1">
         {/* Day labels */}
         <div className="flex flex-col gap-0.5 mr-1 shrink-0">
           {DAYS.map((d, i) => (
