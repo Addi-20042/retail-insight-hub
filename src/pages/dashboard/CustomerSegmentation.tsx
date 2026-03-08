@@ -14,6 +14,7 @@ import CategoryTreemap from '@/components/charts/CategoryTreemap';
 const CustomerSegmentation: React.FC = () => {
   const { data, isLoading, isError, refetch } = useSegmentation();
   const { data: salesData } = useSalesData();
+  const { data: salesStats } = useSalesStats();
 
   const hasData = salesData && salesData.length > 0;
   const segmentData = data?.segments || [];
