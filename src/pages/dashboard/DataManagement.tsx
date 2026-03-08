@@ -392,7 +392,7 @@ const DataManagement: React.FC = () => {
                       <td className="py-2 sm:py-3 px-2 sm:px-4 border-b border-border/50">
                         <input type="checkbox" checked={selectedRows.has(row.id)} onChange={() => toggleRow(row.id)} className="accent-primary" />
                       </td>
-                      <td className="py-2 sm:py-3 px-2 sm:px-4 border-b border-border/50 font-mono text-xs text-muted-foreground whitespace-nowrap">{row.date}</td>
+                      <td className="py-2 sm:py-3 px-2 sm:px-4 border-b border-border/50 font-mono text-xs text-muted-foreground whitespace-nowrap">{new Date(row.date).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</td>
                       <td className="py-2 sm:py-3 px-2 sm:px-4 border-b border-border/50 font-medium text-foreground">
                         {editingRow === row.id ? (
                           <Input className="h-7 text-xs w-28" value={editValues.product} onChange={e => setEditValues(v => ({ ...v, product: e.target.value }))} />
@@ -410,7 +410,7 @@ const DataManagement: React.FC = () => {
                       <td className="py-2 sm:py-3 px-2 sm:px-4 border-b border-border/50 text-foreground">
                         {editingRow === row.id ? (
                           <Input type="number" className="h-7 text-xs w-16" value={editValues.quantity} onChange={e => setEditValues(v => ({ ...v, quantity: e.target.value }))} />
-                        ) : row.quantity.toLocaleString()}
+                        ) : row.quantity.toLocaleString('en-IN')}
                       </td>
                       <td className="py-2 sm:py-3 px-2 sm:px-4 border-b border-border/50 font-semibold text-primary">
                         {editingRow === row.id ? (

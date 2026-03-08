@@ -258,7 +258,7 @@ const ScheduledReports: React.FC = () => {
                           {(report.email_recipients || []).length} recipient{(report.email_recipients || []).length !== 1 ? 's' : ''}
                         </span>
                         {report.last_sent_at && (
-                          <span className="text-xs">Last sent: {new Date(report.last_sent_at).toLocaleDateString()}</span>
+                          <span className="text-xs">Last sent: {new Date(report.last_sent_at).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
                         )}
                       </div>
                     </div>

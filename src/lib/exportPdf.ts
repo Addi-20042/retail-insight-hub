@@ -37,7 +37,7 @@ export const exportToPdf = (exportData: ExportData): void => {
   // Date
   doc.setFontSize(10);
   doc.setTextColor(120);
-  doc.text(`Generated: ${exportData.date || new Date().toLocaleDateString()}`, pageWidth / 2, yPos, { align: 'center' });
+  doc.text(`Generated: ${exportData.date || new Date().toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}`, pageWidth / 2, yPos, { align: 'center' });
   yPos += 15;
 
   // Divider
