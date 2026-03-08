@@ -3,21 +3,24 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { lazy, Suspense } from "react";
 
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import Login from "./pages/Login";
 import DashboardLayout from "./components/layout/DashboardLayout";
-import Overview from "./pages/dashboard/Overview";
-import SalesForecast from "./pages/dashboard/SalesForecast";
-import CustomerSegmentation from "./pages/dashboard/CustomerSegmentation";
-import MarketBasket from "./pages/dashboard/MarketBasket";
-import DataUpload from "./pages/dashboard/DataUpload";
-import DataManagement from "./pages/dashboard/DataManagement";
-import Settings from "./pages/dashboard/Settings";
-import Goals from "./pages/dashboard/Goals";
-import NotFound from "./pages/NotFound";
+
+// Lazy load dashboard pages for faster initial load
+const Overview = lazy(() => import("./pages/dashboard/Overview"));
+const SalesForecast = lazy(() => import("./pages/dashboard/SalesForecast"));
+const CustomerSegmentation = lazy(() => import("./pages/dashboard/CustomerSegmentation"));
+const MarketBasket = lazy(() => import("./pages/dashboard/MarketBasket"));
+const DataUpload = lazy(() => import("./pages/dashboard/DataUpload"));
+const DataManagement = lazy(() => import("./pages/dashboard/DataManagement"));
+const Settings = lazy(() => import("./pages/dashboard/Settings"));
+const Goals = lazy(() => import("./pages/dashboard/Goals"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,18 +33,22 @@ const queryClient = new QueryClient({
   },
 });
 
-
+const PageLoader = () => (
+  <div className="flex items-center justify-center h-full min-h-[60vh]">
+    <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 const App = () => (
   <ThemeProvider>
     <QueryClientProvider client={queryClient}>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <NotificationProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
+      <AuthProvider>
+        <NotificationProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Suspense fallback={<PageLoader />}>
                 <Routes>
                   <Route path="/" element={<Navigate to="/login" replace />} />
                   <Route path="/login" element={<Login />} />
@@ -57,11 +64,11 @@ const App = () => (
                   </Route>
                   <Route path="*" element={<NotFound />} />
                 </Routes>
-              </BrowserRouter>
-            </TooltipProvider>
-          </NotificationProvider>
-        </AuthProvider>
-      </QueryClientProvider>
+              </Suspense>
+            </BrowserRouter>
+          </TooltipProvider>
+        </NotificationProvider>
+      </AuthProvider>
     </QueryClientProvider>
   </ThemeProvider>
 );
