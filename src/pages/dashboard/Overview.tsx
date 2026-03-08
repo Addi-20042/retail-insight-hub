@@ -1,11 +1,13 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
-  TrendingUp, Users, ShoppingBag, Database
+  TrendingUp, Users, ShoppingBag, Database, Upload, BarChart3, ShoppingCart, Target
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 import { QuickActions } from '@/components/QuickActions';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { EmptyState } from '@/components/EmptyState';
@@ -18,6 +20,7 @@ import RevenueHeatmap from '@/components/charts/RevenueHeatmap';
 
 const Overview: React.FC = () => {
   const { data: stats, isLoading, isError } = useSalesStats();
+  const navigate = useNavigate();
 
   const hasData = stats && stats.totalRows > 0;
 
