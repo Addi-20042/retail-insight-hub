@@ -286,6 +286,15 @@ const DataUpload: React.FC = () => {
                 </Badge>
               );
             })}
+            {['transaction_id', 'customer_id'].map(col => {
+              const found = previewData.headers.some(h => h.toLowerCase().replace(/\s+/g, '_').includes(col));
+              return (
+                <Badge key={col} variant={found ? 'secondary' : 'outline'} className={`gap-1 ${!found ? 'border-warning/50 text-warning' : ''}`}>
+                  {found ? <CheckCircle className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                  {col}
+                </Badge>
+              );
+            })}
           </div>
 
           {/* Preview table */}
