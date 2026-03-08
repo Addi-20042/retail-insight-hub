@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, TrendingUp, ShoppingBag, DollarSign, RefreshCw, AlertCircle } from 'lucide-react';
+import { Users, TrendingUp, ShoppingBag, IndianRupee, RefreshCw, AlertCircle } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,7 @@ const CustomerSegmentation: React.FC = () => {
 
   const stats = [
     { icon: Users, color: 'primary', label: 'Total Customers', value: totalCustomers.toLocaleString() },
-    { icon: DollarSign, color: 'chart-secondary', label: 'Total Revenue', value: `₹${totalRevenue.toLocaleString('en-IN')}` },
+    { icon: IndianRupee, color: 'chart-secondary', label: 'Total Revenue', value: `₹${totalRevenue.toLocaleString('en-IN')}` },
     { icon: TrendingUp, color: 'success', label: 'Segments Found', value: segmentData.length },
     { icon: ShoppingBag, color: 'warning', label: 'Avg. Spend', value: `₹${totalCustomers > 0 ? Math.round(totalRevenue / totalCustomers).toLocaleString('en-IN') : 0}` },
   ];
