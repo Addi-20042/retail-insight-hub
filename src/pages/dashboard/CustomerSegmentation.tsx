@@ -69,7 +69,7 @@ const CustomerSegmentation: React.FC = () => {
         </motion.div>
       )}
 
-      <StaggerContainer className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
         {stats.map((stat, i) => (
           <FadeUp key={i}>
             {isLoading ? <StatCardSkeleton /> : (
@@ -151,10 +151,10 @@ const CustomerSegmentation: React.FC = () => {
                       <span className="text-sm text-muted-foreground">Segment {segment.id}</span>
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">{segment.description}</p>
-                    <div className="flex gap-6 mt-3">
-                      <div><p className="text-xs text-muted-foreground">Customers</p><p className="font-semibold text-foreground">{segment.count}</p></div>
-                      <div><p className="text-xs text-muted-foreground">Avg. Spend</p><p className="font-semibold text-foreground">₹{Number(segment.avgSpend).toLocaleString('en-IN')}</p></div>
-                      <div><p className="text-xs text-muted-foreground">Total Revenue</p><p className="font-semibold text-foreground">₹{segment.totalRevenue.toLocaleString('en-IN')}</p></div>
+                    <div className="flex flex-wrap gap-3 sm:gap-6 mt-3">
+                      <div><p className="text-xs text-muted-foreground">Customers</p><p className="text-sm sm:text-base font-semibold text-foreground">{segment.count}</p></div>
+                      <div><p className="text-xs text-muted-foreground">Avg. Spend</p><p className="text-sm sm:text-base font-semibold text-foreground">₹{Number(segment.avgSpend).toLocaleString('en-IN')}</p></div>
+                      <div><p className="text-xs text-muted-foreground">Total Revenue</p><p className="text-sm sm:text-base font-semibold text-foreground">₹{segment.totalRevenue.toLocaleString('en-IN')}</p></div>
                     </div>
                   </div>
                 </div>
