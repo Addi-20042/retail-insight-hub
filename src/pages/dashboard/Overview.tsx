@@ -81,13 +81,13 @@ const Overview: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.4 }}
+        transition={{ delay: 0.1, duration: 0.25 }}
       >
         <QuickActions />
       </motion.div>
 
       {/* Charts & Activity Section */}
-      <StaggerContainer className="grid grid-cols-1 xl:grid-cols-3 gap-6" staggerDelay={0.15}>
+      <StaggerContainer className="grid grid-cols-1 xl:grid-cols-3 gap-6" staggerDelay={0.05}>
         {/* Revenue Chart */}
         <FadeUp className="xl:col-span-2 chart-container">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2">
@@ -108,7 +108,7 @@ const Overview: React.FC = () => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
+              transition={{ delay: 0.15, duration: 0.3 }}
             >
               <ResponsiveContainer width="100%" height={280}>
                 <AreaChart data={stats.revenueData}>

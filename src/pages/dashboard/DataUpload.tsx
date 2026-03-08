@@ -12,7 +12,7 @@ import { PageHeader, StaggerContainer, FadeUp, ShimmerSkeleton } from '@/compone
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
-const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_MB = 512;
 
 const DataUpload: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);

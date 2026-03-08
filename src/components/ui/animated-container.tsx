@@ -7,7 +7,7 @@ export const StaggerContainer: React.FC<{
   children: React.ReactNode;
   className?: string;
   staggerDelay?: number;
-}> = ({ children, className, staggerDelay = 0.06 }) => (
+}> = ({ children, className, staggerDelay = 0.03 }) => (
   <motion.div
     className={className}
     initial="hidden"
@@ -28,8 +28,8 @@ export const FadeUp: React.FC<HTMLMotionProps<'div'> & { children: React.ReactNo
   <motion.div
     className={className}
     variants={{
-      hidden: { opacity: 0, y: 18 },
-      visible: { opacity: 1, y: 0, transition: { duration: 0.42, ease: [0.25, 0.46, 0.45, 0.94] } },
+      hidden: { opacity: 0, y: 10 },
+      visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] } },
     }}
     {...props}
   >
@@ -44,8 +44,8 @@ export const ScaleIn: React.FC<HTMLMotionProps<'div'> & { children: React.ReactN
   <motion.div
     className={className}
     variants={{
-      hidden: { opacity: 0, scale: 0.92 },
-      visible: { opacity: 1, scale: 1, transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] } },
+      hidden: { opacity: 0, scale: 0.95 },
+      visible: { opacity: 1, scale: 1, transition: { duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] } },
     }}
     {...props}
   >
@@ -154,9 +154,9 @@ export const PageHeader: React.FC<{
 }> = ({ title, description, children }) => (
   <motion.div
     className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-    initial={{ opacity: 0, y: -12 }}
+    initial={{ opacity: 0, y: -8 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+    transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
   >
     <div>
       <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">

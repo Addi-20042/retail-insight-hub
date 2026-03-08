@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import BackendStatus from '@/components/BackendStatus';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 
@@ -100,9 +99,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onNavigate }) => {
         })}
       </nav>
 
-      {/* Backend Status & Theme */}
-      <div className="px-3 py-2 flex items-center justify-between border-t border-sidebar-border/50">
-        <BackendStatus />
+      {/* Theme Toggle */}
+      <div className="px-3 py-2 flex items-center justify-end border-t border-sidebar-border/50">
         <ThemeToggle />
       </div>
 
