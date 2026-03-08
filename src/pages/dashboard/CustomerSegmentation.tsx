@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, TrendingUp, ShoppingBag, IndianRupee, AlertCircle } from 'lucide-react';
+import { Users, TrendingUp, ShoppingBag, IndianRupee, AlertCircle, Download } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,8 @@ import {
   StaggerContainer, FadeUp, PageHeader, StatCardSkeleton, ChartSkeleton, TableSkeleton, HoverCard, ShimmerSkeleton
 } from '@/components/ui/animated-container';
 import CategoryTreemap from '@/components/charts/CategoryTreemap';
+import { exportSegmentsToPdf, captureChartAsImage } from '@/lib/exportPdf';
+import { toast } from 'sonner';
 
 const CustomerSegmentation: React.FC = () => {
   const { data, isLoading, isError, refetch } = useSegmentation();
@@ -43,6 +45,18 @@ const CustomerSegmentation: React.FC = () => {
   return (
     <div className="space-y-8">
       <PageHeader title="Customer Segmentation" description="K-Means clustering analysis of customer buying patterns">
+        <Button variant="outline" size="icon" onClick={async () => {
+          const chartImage = await captureChartAsImage('.recharts-wrapper');
+          exportSegmentsToPdf(segmentData.map(s => ({
+            name: s.name,
+            count: s.count,
+            avgSpend: `₹${s.avgSpend.toLocaleString('en-IN')}`,
+            frequency: s.count > 10 ? 'High' : s.count > 5 ? 'Medium' : 'Low',
+          })), chartImage);
+          toast.success('PDF exported');
+        }} title="Export to PDF">
+          <Download className="w-4 h-4" />
+        </Button>
       </PageHeader>
 
       {isError && (

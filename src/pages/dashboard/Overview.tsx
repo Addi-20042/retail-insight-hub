@@ -1,11 +1,13 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
-  TrendingUp, Users, ShoppingBag, Database
+  TrendingUp, Users, ShoppingBag, Database, Upload, BarChart3, ShoppingCart, Target
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 import { QuickActions } from '@/components/QuickActions';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { EmptyState } from '@/components/EmptyState';
@@ -18,6 +20,7 @@ import RevenueHeatmap from '@/components/charts/RevenueHeatmap';
 
 const Overview: React.FC = () => {
   const { data: stats, isLoading, isError } = useSalesStats();
+  const navigate = useNavigate();
 
   const hasData = stats && stats.totalRows > 0;
 
@@ -111,11 +114,45 @@ const Overview: React.FC = () => {
           {isLoading ? (
             <ChartSkeleton />
           ) : !hasData ? (
-            <EmptyState
-              icon={<Database className="w-8 h-8 text-muted-foreground" />}
-              title="No Sales Data Yet"
-              description="Upload your CSV sales data to see revenue trends and analytics here."
-            />
+            <div className="py-8 text-center space-y-5">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', delay: 0.2 }}
+                className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto"
+              >
+                <Upload className="w-8 h-8 text-primary" />
+              </motion.div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Get Started with RetailMind</h3>
+                <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+                  Upload your sales CSV to unlock forecasts, customer segments, basket analysis, and more.
+                </p>
+              </div>
+              <Button onClick={() => navigate('/dashboard/upload')} className="gap-2">
+                <Upload className="w-4 h-4" />
+                Upload Sales Data
+              </Button>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-border/50 mt-4">
+                {[
+                  { icon: BarChart3, label: 'Sales Forecasting' },
+                  { icon: Users, label: 'Customer Segments' },
+                  { icon: ShoppingCart, label: 'Basket Analysis' },
+                  { icon: Target, label: 'Goals & Tracking' },
+                ].map((feature, i) => (
+                  <motion.div
+                    key={feature.label}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 + i * 0.1 }}
+                    className="flex flex-col items-center gap-1.5 py-2"
+                  >
+                    <feature.icon className="w-5 h-5 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground text-center">{feature.label}</span>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           ) : (
             <motion.div
               initial={{ opacity: 0 }}

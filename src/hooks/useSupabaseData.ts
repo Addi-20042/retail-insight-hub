@@ -192,6 +192,11 @@ export const useUploadToSupabase = () => {
           const product = cols[productIdx]?.substring(0, 200);
           if (!product) continue;
 
+          // Auto-generate transaction_id if missing: group by customer_id + date
+          const rawCustomerId = customerIdx !== -1 ? (cols[customerIdx]?.substring(0, 100) || null) : null;
+          const rawTransactionId = transactionIdx !== -1 ? (cols[transactionIdx]?.substring(0, 100) || null) : null;
+          const autoTransactionId = rawTransactionId || (rawCustomerId ? `${rawCustomerId}_${dateVal}` : `auto_${dateVal}_${start + chunk.indexOf(line)}`);
+
           rows.push({
             user_id: user.id,
             date: dateVal,
@@ -199,8 +204,8 @@ export const useUploadToSupabase = () => {
             quantity: qty,
             revenue: rev,
             category: categoryIdx !== -1 ? (cols[categoryIdx]?.substring(0, 100) || null) : null,
-            customer_id: customerIdx !== -1 ? (cols[customerIdx]?.substring(0, 100) || null) : null,
-            transaction_id: transactionIdx !== -1 ? (cols[transactionIdx]?.substring(0, 100) || null) : null,
+            customer_id: rawCustomerId,
+            transaction_id: autoTransactionId,
           });
         }
         if (rows.length > 0) {
