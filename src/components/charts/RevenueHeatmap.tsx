@@ -104,13 +104,12 @@ const RevenueHeatmap: React.FC<RevenueHeatmapProps> = ({ data }) => {
       else break;
     }
 
-    // Week-over-week trend
-    const thisWeekRev = finalWeeks.length > 0
-      ? finalWeeks[finalWeeks.length - 1].reduce((s, d) => s + d.revenue, 0)
-      : 0;
-    const prevWeekRev = finalWeeks.length > 1
-      ? finalWeeks[finalWeeks.length - 2].reduce((s, d) => s + d.revenue, 0)
-      : 0;
+    // Week-over-week trend: compare last 7 days with data vs prior 7 days with data
+    const daysWithRevenue = recentData.filter(d => d.revenue > 0);
+    const recentHalf = daysWithRevenue.slice(-7);
+    const priorHalf = daysWithRevenue.slice(-14, -7);
+    const thisWeekRev = recentHalf.reduce((s, d) => s + d.revenue, 0);
+    const prevWeekRev = priorHalf.reduce((s, d) => s + d.revenue, 0);
     const wowChange = prevWeekRev > 0 ? ((thisWeekRev - prevWeekRev) / prevWeekRev) * 100 : 0;
 
     return {
