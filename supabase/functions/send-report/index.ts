@@ -196,7 +196,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       success: true,
       message: `Report sent to ${sanitizedRecipients.length} recipient(s)`,
-      emailId: emailResult.id,
+      messageId: emailResult.messageId,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (error) {
