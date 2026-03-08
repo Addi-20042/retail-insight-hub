@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, ShoppingCart, ArrowRight, Sparkles, AlertCircle, TrendingUp, BarChart3, Filter } from 'lucide-react';
+import { Search, ShoppingCart, ArrowRight, Sparkles, AlertCircle, TrendingUp, BarChart3, Filter, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/animated-container';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { exportBasketToPdf } from '@/lib/exportPdf';
+import { toast } from 'sonner';
 
 const MarketBasket: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -69,7 +71,11 @@ const MarketBasket: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <PageHeader title="Market Basket Analysis" description="Discover products frequently purchased together using Association Rule Mining" />
+      <PageHeader title="Market Basket Analysis" description="Discover products frequently purchased together using Association Rule Mining">
+        <Button variant="outline" size="icon" onClick={() => { exportBasketToPdf(allRules); toast.success('PDF exported'); }} title="Export to PDF">
+          <Download className="w-4 h-4" />
+        </Button>
+      </PageHeader>
 
       {/* Warning: missing transaction grouping data */}
       {lacksGroupingData && (
