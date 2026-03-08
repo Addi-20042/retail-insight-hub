@@ -230,22 +230,24 @@ export const exportForecastToPdf = async (forecastData: {
   });
 };
 
-export const exportSegmentsToPdf = (segmentData: any[]) => {
+export const exportSegmentsToPdf = (segmentData: any[], chartImage?: string | null) => {
+  const sections: ExportSection[] = [
+    {
+      title: 'Segment Overview',
+      type: 'table',
+      columns: ['name', 'count', 'avgSpend', 'frequency'],
+      data: segmentData || [],
+    },
+  ];
+
+  if (chartImage) {
+    sections.push({ title: 'Segment Distribution', type: 'chart-image', imageDataUrl: chartImage });
+  }
+
   exportToPdf({
     title: 'Customer Segmentation Report',
     subtitle: 'K-Means Clustering Analysis',
-    sections: [
-      {
-        title: 'Segment Overview',
-        type: 'table',
-        columns: ['name', 'count', 'avgSpend', 'frequency'],
-        data: segmentData || [
-          { name: 'High Value', count: 1250, avgSpend: '$450', frequency: 'Weekly' },
-          { name: 'Regular', count: 3500, avgSpend: '$180', frequency: 'Bi-weekly' },
-          { name: 'Occasional', count: 2800, avgSpend: '$75', frequency: 'Monthly' },
-        ],
-      },
-    ],
+    sections,
   });
 };
 
