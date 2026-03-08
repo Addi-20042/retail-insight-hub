@@ -139,7 +139,7 @@ const DataUpload: React.FC = () => {
                   <Input type="number" value={manualEntry.quantity} onChange={e => setManualEntry(p => ({ ...p, quantity: e.target.value }))} required />
                 </div>
                 <div className="space-y-2">
-                  <Label>Revenue ($)</Label>
+                  <Label>Revenue (₹)</Label>
                   <Input type="number" step="0.01" value={manualEntry.revenue} onChange={e => setManualEntry(p => ({ ...p, revenue: e.target.value }))} required />
                 </div>
               </div>
@@ -370,7 +370,7 @@ const DataUpload: React.FC = () => {
                   <div className="min-w-0">
                     <p className="font-medium text-foreground text-sm sm:text-base truncate">{upload.filename}</p>
                     <p className="text-xs sm:text-sm text-muted-foreground">
-                      {new Date(upload.created_at).toLocaleString()} • {upload.rows_count.toLocaleString()} rows
+                      {new Date(upload.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })} {new Date(upload.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} • {upload.rows_count.toLocaleString('en-IN')} rows
                     </p>
                   </div>
                 </div>

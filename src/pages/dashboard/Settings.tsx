@@ -153,7 +153,7 @@ const Settings: React.FC = () => {
     { device: navigator.userAgent.includes('Chrome') ? 'Chrome' : navigator.userAgent.includes('Firefox') ? 'Firefox' : 'Browser', location: 'Current session', lastActive: 'Now', current: true },
   ];
 
-  const memberSince = profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'N/A';
+  const memberSince = profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long' }) : 'N/A';
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">

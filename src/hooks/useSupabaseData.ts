@@ -62,7 +62,7 @@ export const useSalesStats = () => {
       const revenueData = Array.from(monthlyMap.entries())
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([month, data]) => ({
-          date: new Date(month + '-01').toLocaleString('default', { month: 'short' }),
+          date: new Date(month + '-01').toLocaleString('en-IN', { month: 'short' }),
           revenue: Math.round(data.revenue),
         }));
 
