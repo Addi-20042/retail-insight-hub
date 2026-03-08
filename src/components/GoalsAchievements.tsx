@@ -101,6 +101,7 @@ const GoalsAchievements: React.FC = () => {
       setDialogOpen(false);
       setNewGoal({ title: '', description: '', targetValue: 100, unit: '%', category: 'general' });
       toast.success('Goal created!');
+      recheckAchievements();
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -121,6 +122,7 @@ const GoalsAchievements: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
+      recheckAchievements();
     },
   });
 
@@ -140,6 +142,7 @@ const GoalsAchievements: React.FC = () => {
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
       if (!vars.completed) toast.success('🎉 Goal completed!');
+      recheckAchievements();
     },
   });
 
