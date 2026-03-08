@@ -252,20 +252,37 @@ export const exportSegmentsToPdf = (segmentData: any[], chartImage?: string | nu
 };
 
 export const exportBasketToPdf = (basketRules: any[]) => {
+  const sections: ExportSection[] = [];
+
+  if (basketRules && basketRules.length > 0) {
+    sections.push({
+      title: 'Summary',
+      type: 'summary',
+      summary: [
+        { label: 'Rules Found', value: basketRules.length },
+        { label: 'Avg Confidence', value: `${(basketRules.reduce((s, r) => s + (r.confidence || 0), 0) / basketRules.length * 100).toFixed(1)}%` },
+        { label: 'Avg Lift', value: `${(basketRules.reduce((s, r) => s + (r.lift || 0), 0) / basketRules.length).toFixed(2)}x` },
+      ],
+    });
+  }
+
+  sections.push({
+    title: 'Top Association Rules',
+    type: 'table',
+    columns: ['Product A', 'Product B', 'Support', 'Confidence', 'Lift'],
+    data: (basketRules || []).map(r => ({
+      'Product A': r.productA || r.antecedent || '',
+      'Product B': r.productB || r.consequent || '',
+      'Support': `${((r.support || 0) * 100).toFixed(1)}%`,
+      'Confidence': `${((r.confidence || 0) * 100).toFixed(1)}%`,
+      'Lift': `${(r.lift || 0).toFixed(2)}x`,
+    })),
+  });
+
   exportToPdf({
     title: 'Market Basket Analysis',
     subtitle: 'Product Association Rules',
-    sections: [
-      {
-        title: 'Top Association Rules',
-        type: 'table',
-        columns: ['antecedent', 'consequent', 'support', 'confidence', 'lift'],
-        data: basketRules || [
-          { antecedent: 'Bread', consequent: 'Butter', support: '0.35', confidence: '0.72', lift: '2.1' },
-          { antecedent: 'Coffee', consequent: 'Milk', support: '0.28', confidence: '0.65', lift: '1.9' },
-        ],
-      },
-    ],
+    sections,
   });
 };
 

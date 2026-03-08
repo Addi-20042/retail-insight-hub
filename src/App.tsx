@@ -20,6 +20,7 @@ const DataUpload = lazy(() => import("./pages/dashboard/DataUpload"));
 const DataManagement = lazy(() => import("./pages/dashboard/DataManagement"));
 const Settings = lazy(() => import("./pages/dashboard/Settings"));
 const Goals = lazy(() => import("./pages/dashboard/Goals"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -52,6 +53,7 @@ const App = () => (
                 <Routes>
                   <Route path="/" element={<Navigate to="/login" replace />} />
                   <Route path="/login" element={<Login />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/dashboard" element={<DashboardLayout />}>
                     <Route index element={<Overview />} />
                     <Route path="forecast" element={<SalesForecast />} />
