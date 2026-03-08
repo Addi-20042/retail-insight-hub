@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, TrendingUp, ShoppingBag, IndianRupee, RefreshCw, AlertCircle } from 'lucide-react';
+import { Users, TrendingUp, ShoppingBag, IndianRupee, AlertCircle } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -43,9 +43,6 @@ const CustomerSegmentation: React.FC = () => {
   return (
     <div className="space-y-8">
       <PageHeader title="Customer Segmentation" description="K-Means clustering analysis of customer buying patterns">
-        <Button variant="outline" size="icon" onClick={() => refetch()} disabled={isLoading}>
-          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-        </Button>
       </PageHeader>
 
       {isError && (

@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, Line, ComposedChart, Legend
 } from 'recharts';
-import { Calendar, TrendingUp, TrendingDown, RefreshCw, Download, AlertCircle, BarChart3 } from 'lucide-react';
+import { Calendar, TrendingUp, TrendingDown, Download, AlertCircle, BarChart3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -70,9 +70,7 @@ const SalesForecast: React.FC = () => {
         <Button variant="outline" size="icon" onClick={async () => { await exportForecastToPdf({ days: forecastDays, accuracy: '94.2%', total: `₹${totalPredicted.toLocaleString('en-IN')}`, avgDaily: `₹${avgDaily.toLocaleString('en-IN')}`, trend: trend ? 'Upward' : 'Downward', forecastRows: forecastData }); toast.success('PDF exported with chart & data'); }} title="Export to PDF">
           <Download className="w-4 h-4" />
         </Button>
-        <Button variant="outline" size="icon" onClick={() => refetch()} disabled={isLoading}>
-          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-        </Button>
+        
         <Calendar className="w-5 h-5 text-muted-foreground" />
         <Select value={forecastDays} onValueChange={setForecastDays}>
           <SelectTrigger className="w-40"><SelectValue placeholder="Select days" /></SelectTrigger>

@@ -226,9 +226,6 @@ const DataManagement: React.FC = () => {
   return (
     <div className="space-y-4 sm:space-y-6">
       <PageHeader title="Data Management" description="View, filter, edit and manage your sales records">
-        <Button variant="outline" size="icon" onClick={() => refetch()} title="Refresh">
-          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-        </Button>
         <Button variant="outline" onClick={exportCSV} className="gap-2">
           <Download className="w-4 h-4" /> <span className="hidden sm:inline">Export CSV</span>
         </Button>
