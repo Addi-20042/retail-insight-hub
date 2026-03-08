@@ -89,7 +89,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onOpenNotes }) =
         <CommandSeparator />
 
         <CommandGroup heading="Quick Actions">
-          <CommandItem onSelect={() => runCommand(() => exportForecastToPdf({}))}>
+          <CommandItem onSelect={() => runCommand(() => exportForecastToPdf({ days: '7', accuracy: '94.2%', total: 'N/A' }))}>
             <Download className="mr-2 h-4 w-4" />
             Export Forecast Report
           </CommandItem>

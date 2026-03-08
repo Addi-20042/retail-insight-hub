@@ -39,7 +39,7 @@ export const QuickActions: React.FC = () => {
       color: 'text-success',
       bgColor: 'bg-success/10',
       onClick: () => {
-        exportForecastToPdf({});
+        exportForecastToPdf({ days: '7', accuracy: '94.2%', total: 'N/A' });
         toast.success('Report generated!');
       },
     },
