@@ -157,30 +157,29 @@ const DataUpload: React.FC = () => {
 
       {/* Upload Stats */}
       <StaggerContainer className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <FadeUp>
-          <Card className="glass-card">
-            <CardContent className="pt-4 pb-3">
-              <p className="text-xs text-muted-foreground">Total Uploads</p>
-              <p className="text-2xl font-bold text-foreground">{totalUploads}</p>
-            </CardContent>
-          </Card>
-        </FadeUp>
-        <FadeUp>
-          <Card className="glass-card">
-            <CardContent className="pt-4 pb-3">
-              <p className="text-xs text-muted-foreground">Total Rows</p>
-              <p className="text-2xl font-bold text-foreground">{totalRowsUploaded.toLocaleString()}</p>
-            </CardContent>
-          </Card>
-        </FadeUp>
-        <FadeUp>
-          <Card className="glass-card hidden sm:block">
-            <CardContent className="pt-4 pb-3">
-              <p className="text-xs text-muted-foreground">Max File Size</p>
-              <p className="text-2xl font-bold text-foreground">{MAX_FILE_SIZE_MB}MB</p>
-            </CardContent>
-          </Card>
-        </FadeUp>
+        {[
+          { label: 'Total Uploads', value: totalUploads, loading: historyLoading },
+          { label: 'Total Rows', value: totalRowsUploaded.toLocaleString(), loading: historyLoading },
+          { label: 'Max File Size', value: `${MAX_FILE_SIZE_MB}MB`, loading: false, hideOnMobile: true },
+        ].map((s, i) => (
+          <FadeUp key={i}>
+            <Card className={`glass-card ${s.hideOnMobile ? 'hidden sm:block' : ''}`}>
+              <CardContent className="pt-4 pb-3">
+                {s.loading ? (
+                  <div className="space-y-2 animate-pulse">
+                    <div className="h-3 w-20 bg-muted rounded" />
+                    <div className="h-7 w-16 bg-muted rounded" />
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-xs text-muted-foreground">{s.label}</p>
+                    <p className="text-2xl font-bold text-foreground">{s.value}</p>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </FadeUp>
+        ))}
       </StaggerContainer>
 
       {/* Upload Area */}
