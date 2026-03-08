@@ -51,6 +51,7 @@ export const useSalesStats = () => {
       const uniqueCustomers = new Set(rows.map(r => r.product)).size;
       const dates = rows.map(r => r.date).sort();
       
+      // Monthly revenue for area chart
       const monthlyMap = new Map<string, { revenue: number }>();
       rows.forEach(r => {
         const month = r.date.substring(0, 7);
@@ -66,12 +67,46 @@ export const useSalesStats = () => {
           revenue: Math.round(data.revenue),
         }));
 
+      // Daily revenue for sparklines & heatmap
+      const dailyMap = new Map<string, number>();
+      rows.forEach(r => {
+        dailyMap.set(r.date, (dailyMap.get(r.date) || 0) + Number(r.revenue));
+      });
+      const dailyRevenue = Array.from(dailyMap.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([date, revenue]) => ({ date, revenue: Math.round(revenue) }));
+
+      // Daily quantity for sparkline
+      const dailyQtyMap = new Map<string, number>();
+      rows.forEach(r => {
+        dailyQtyMap.set(r.date, (dailyQtyMap.get(r.date) || 0) + r.quantity);
+      });
+      const dailyQuantity = Array.from(dailyQtyMap.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([date, qty]) => ({ date, value: qty }));
+
+      // Category breakdown for treemap
+      const categoryMap = new Map<string, { revenue: number; quantity: number }>();
+      rows.forEach(r => {
+        const cat = r.category || 'Uncategorized';
+        const existing = categoryMap.get(cat) || { revenue: 0, quantity: 0 };
+        existing.revenue += Number(r.revenue);
+        existing.quantity += r.quantity;
+        categoryMap.set(cat, existing);
+      });
+      const categoryBreakdown = Array.from(categoryMap.entries())
+        .map(([name, data]) => ({ name, revenue: Math.round(data.revenue), quantity: data.quantity }))
+        .sort((a, b) => b.revenue - a.revenue);
+
       return {
         totalRevenue,
         totalProducts,
         uniqueProducts: uniqueCustomers,
         totalRows: rows.length,
         revenueData,
+        dailyRevenue,
+        dailyQuantity,
+        categoryBreakdown,
         dateRange: dates.length > 0 ? { start: dates[0], end: dates[dates.length - 1] } : null,
       };
     },
