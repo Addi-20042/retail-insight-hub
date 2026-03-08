@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, TrendingUp, ShoppingBag, IndianRupee, RefreshCw, AlertCircle } from 'lucide-react';
+import { Users, TrendingUp, ShoppingBag, IndianRupee, AlertCircle } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';

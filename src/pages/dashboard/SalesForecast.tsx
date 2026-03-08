@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, Line, ComposedChart, Legend
 } from 'recharts';
-import { Calendar, TrendingUp, TrendingDown, RefreshCw, Download, AlertCircle, BarChart3 } from 'lucide-react';
+import { Calendar, TrendingUp, TrendingDown, Download, AlertCircle, BarChart3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
