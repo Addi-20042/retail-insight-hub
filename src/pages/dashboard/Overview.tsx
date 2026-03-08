@@ -11,18 +11,24 @@ import { ActivityFeed } from '@/components/ActivityFeed';
 import { EmptyState } from '@/components/EmptyState';
 import { useSalesStats } from '@/hooks/useSupabaseData';
 import { 
-  StaggerContainer, FadeUp, PageHeader, StatCardSkeleton, ChartSkeleton, HoverCard, AnimatedNumber
+  StaggerContainer, FadeUp, PageHeader, StatCardSkeleton, ChartSkeleton, HoverCard, AnimatedNumber, ShimmerSkeleton
 } from '@/components/ui/animated-container';
+import Sparkline from '@/components/charts/Sparkline';
+import RevenueHeatmap from '@/components/charts/RevenueHeatmap';
 
 const Overview: React.FC = () => {
   const { data: stats, isLoading, isError } = useSalesStats();
 
   const hasData = stats && stats.totalRows > 0;
 
+  // Prepare sparkline data from daily revenue
+  const revenueSparkline = hasData ? (stats.dailyRevenue || []).map(d => ({ value: d.revenue })) : [];
+  const quantitySparkline = hasData ? (stats.dailyQuantity || []).map(d => ({ value: d.value })) : [];
+
   const statCards = [
-    { label: 'Total Revenue', value: hasData ? stats.totalRevenue : 0, prefix: '₹', icon: TrendingUp, color: 'primary' },
-    { label: 'Unique Products', value: hasData ? stats.uniqueProducts : 0, icon: Users, color: 'chart-secondary' },
-    { label: 'Products Sold', value: hasData ? stats.totalProducts : 0, icon: ShoppingBag, color: 'success' },
+    { label: 'Total Revenue', value: hasData ? stats.totalRevenue : 0, prefix: '₹', icon: TrendingUp, color: 'primary', sparkline: revenueSparkline, sparkColor: 'hsl(168, 76%, 42%)' },
+    { label: 'Unique Products', value: hasData ? stats.uniqueProducts : 0, icon: Users, color: 'chart-secondary', sparkline: quantitySparkline, sparkColor: 'hsl(221, 83%, 53%)' },
+    { label: 'Products Sold', value: hasData ? stats.totalProducts : 0, icon: ShoppingBag, color: 'success', sparkline: quantitySparkline, sparkColor: 'hsl(142, 71%, 45%)' },
   ];
 
   if (isError) {
@@ -46,7 +52,7 @@ const Overview: React.FC = () => {
     <div className="space-y-6">
       <PageHeader title="Dashboard Overview" description="Monitor your retail analytics at a glance" />
 
-      {/* Stats Grid */}
+      {/* Stats Grid with Sparklines */}
       <StaggerContainer className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
         {statCards.map((stat, index) => (
           <FadeUp key={index}>
@@ -70,6 +76,12 @@ const Overview: React.FC = () => {
                       <stat.icon className={`w-4 h-4 sm:w-5 sm:h-5 text-${stat.color}`} />
                     </motion.div>
                   </div>
+                  {/* Sparkline */}
+                  {stat.sparkline.length > 2 && (
+                    <div className="mt-2 -mx-1">
+                      <Sparkline data={stat.sparkline} color={stat.sparkColor} height={28} />
+                    </div>
+                  )}
                 </div>
               </HoverCard>
             )}
@@ -136,6 +148,41 @@ const Overview: React.FC = () => {
           <ActivityFeed />
         </FadeUp>
       </StaggerContainer>
+
+      {/* Revenue Heatmap Calendar */}
+      {hasData && stats.dailyRevenue && stats.dailyRevenue.length > 0 && (
+        <FadeUp>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="chart-container"
+          >
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-foreground">Revenue Heatmap</h3>
+              <p className="text-sm text-muted-foreground">Daily revenue intensity over the last 12 weeks</p>
+            </div>
+            <RevenueHeatmap data={stats.dailyRevenue} />
+          </motion.div>
+        </FadeUp>
+      )}
+      {isLoading && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="chart-container">
+          <div className="mb-4">
+            <ShimmerSkeleton className="h-5 w-40 mb-2" />
+            <ShimmerSkeleton className="h-3 w-64" />
+          </div>
+          <div className="flex gap-0.5">
+            {Array.from({ length: 12 }).map((_, wi) => (
+              <div key={wi} className="flex flex-col gap-0.5">
+                {Array.from({ length: 7 }).map((_, di) => (
+                  <div key={di} className="w-3 h-3 rounded-[2px] bg-muted animate-pulse" />
+                ))}
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 };
