@@ -93,7 +93,7 @@ export const useUploadToSupabase = () => {
       const lines = text.trim().split('\n');
       if (lines.length < 2) throw new Error('CSV file is empty or has no data rows');
       
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/^"|"$/g, ''));
       const dateIdx = headers.indexOf('date');
       const productIdx = headers.indexOf('product');
       const quantityIdx = headers.indexOf('quantity');
@@ -106,48 +106,54 @@ export const useUploadToSupabase = () => {
         throw new Error('CSV must have columns: date, product, quantity, revenue');
       }
 
+      const totalRows = lines.length - 1;
       const { data: upload, error: uploadErr } = await supabase
         .from('upload_history')
-        .insert({ user_id: user.id, filename: file.name, rows_count: lines.length - 1, status: 'processing' })
+        .insert({ user_id: user.id, filename: file.name, rows_count: totalRows, status: 'processing' })
         .select()
         .single();
       if (uploadErr) throw uploadErr;
 
-      const rows = [];
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(',').map(c => c.trim());
-        if (cols.length < 4) continue;
-        rows.push({
-          user_id: user.id,
-          date: cols[dateIdx],
-          product: cols[productIdx],
-          quantity: parseInt(cols[quantityIdx]) || 0,
-          revenue: parseFloat(cols[revenueIdx]) || 0,
-          category: categoryIdx !== -1 ? cols[categoryIdx] || null : null,
-          customer_id: customerIdx !== -1 ? cols[customerIdx] || null : null,
-          transaction_id: transactionIdx !== -1 ? cols[transactionIdx] || null : null,
-        });
-      }
+      // Process and insert in chunks for memory efficiency with large files
+      const chunkSize = 1000;
+      let processedRows = 0;
 
-      const chunkSize = 500;
-      for (let i = 0; i < rows.length; i += chunkSize) {
-        const chunk = rows.slice(i, i + chunkSize);
-        const { error } = await supabase.from('sales_data').insert(chunk);
-        if (error) throw error;
+      for (let start = 1; start < lines.length; start += chunkSize) {
+        const chunk = lines.slice(start, start + chunkSize);
+        const rows = [];
+        for (const line of chunk) {
+          const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+          if (cols.length < 4 || !cols[dateIdx]) continue;
+          rows.push({
+            user_id: user.id,
+            date: cols[dateIdx],
+            product: cols[productIdx],
+            quantity: parseInt(cols[quantityIdx]) || 0,
+            revenue: parseFloat(cols[revenueIdx]) || 0,
+            category: categoryIdx !== -1 ? cols[categoryIdx] || null : null,
+            customer_id: customerIdx !== -1 ? cols[customerIdx] || null : null,
+            transaction_id: transactionIdx !== -1 ? cols[transactionIdx] || null : null,
+          });
+        }
+        if (rows.length > 0) {
+          const { error } = await supabase.from('sales_data').insert(rows);
+          if (error) throw error;
+          processedRows += rows.length;
+        }
       }
 
       await supabase
         .from('upload_history')
-        .update({ status: 'success', rows_count: rows.length })
+        .update({ status: 'success', rows_count: processedRows })
         .eq('id', upload.id);
 
       await supabase.from('activity_log').insert({
         user_id: user.id,
         type: 'upload',
-        message: `Uploaded ${file.name} (${rows.length} rows)`,
+        message: `Uploaded ${file.name} (${processedRows.toLocaleString()} rows)`,
       });
 
-      return { rows_processed: rows.length, filename: file.name };
+      return { rows_processed: processedRows, filename: file.name };
     },
     onSuccess: () => {
       // Invalidate all data queries including analytics edge functions
