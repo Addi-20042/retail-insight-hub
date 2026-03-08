@@ -9,8 +9,10 @@ import { useUploadToSupabase, useAddSalesEntry, useUploadHistory } from '@/hooks
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { PageHeader, StaggerContainer, FadeUp, ShimmerSkeleton } from '@/components/ui/animated-container';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { manualEntrySchema } from '@/lib/validations';
+import { formatNumber } from '@/lib/formatters';
 
 const MAX_FILE_SIZE_MB = 512;
 
@@ -22,6 +24,7 @@ const DataUpload: React.FC = () => {
   const [previewData, setPreviewData] = useState<{ headers: string[]; rows: string[][]; fileName: string } | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [manualErrors, setManualErrors] = useState<Record<string, string>>({});
   
   const uploadMutation = useUploadToSupabase();
   const addEntryMutation = useAddSalesEntry();
@@ -100,11 +103,26 @@ const DataUpload: React.FC = () => {
 
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setManualErrors({});
+
+    const result = manualEntrySchema.safeParse(manualEntry);
+    if (!result.success) {
+      const errors: Record<string, string> = {};
+      result.error.errors.forEach(err => {
+        if (err.path[0]) errors[err.path[0] as string] = err.message;
+      });
+      setManualErrors(errors);
+      toast.error(Object.values(errors)[0]);
+      return;
+    }
+
     try {
       await addEntryMutation.mutateAsync({
-        date: manualEntry.date, product: manualEntry.product,
-        quantity: parseInt(manualEntry.quantity) || 0, revenue: parseFloat(manualEntry.revenue) || 0,
-        category: manualEntry.category || undefined,
+        date: result.data.date,
+        product: result.data.product,
+        quantity: result.data.quantity,
+        revenue: result.data.revenue,
+        category: result.data.category || undefined,
       });
       toast.success('Entry added successfully');
       setManualEntry({ date: '', product: '', quantity: '', revenue: '', category: '' });
@@ -128,24 +146,28 @@ const DataUpload: React.FC = () => {
               <div className="space-y-2">
                 <Label>Date</Label>
                 <Input type="date" value={manualEntry.date} onChange={e => setManualEntry(p => ({ ...p, date: e.target.value }))} required />
+                {manualErrors.date && <p className="text-xs text-destructive">{manualErrors.date}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Product</Label>
-                <Input value={manualEntry.product} onChange={e => setManualEntry(p => ({ ...p, product: e.target.value }))} required placeholder="Product name" />
+                <Input value={manualEntry.product} onChange={e => setManualEntry(p => ({ ...p, product: e.target.value }))} required placeholder="Product name" maxLength={200} />
+                {manualErrors.product && <p className="text-xs text-destructive">{manualErrors.product}</p>}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Quantity</Label>
-                  <Input type="number" value={manualEntry.quantity} onChange={e => setManualEntry(p => ({ ...p, quantity: e.target.value }))} required />
+                  <Input type="number" value={manualEntry.quantity} onChange={e => setManualEntry(p => ({ ...p, quantity: e.target.value }))} required min={1} />
+                  {manualErrors.quantity && <p className="text-xs text-destructive">{manualErrors.quantity}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label>Revenue (₹)</Label>
-                  <Input type="number" step="0.01" value={manualEntry.revenue} onChange={e => setManualEntry(p => ({ ...p, revenue: e.target.value }))} required />
+                  <Input type="number" step="0.01" value={manualEntry.revenue} onChange={e => setManualEntry(p => ({ ...p, revenue: e.target.value }))} required min={0} />
+                  {manualErrors.revenue && <p className="text-xs text-destructive">{manualErrors.revenue}</p>}
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Category (optional)</Label>
-                <Input value={manualEntry.category} onChange={e => setManualEntry(p => ({ ...p, category: e.target.value }))} placeholder="e.g., Electronics" />
+                <Input value={manualEntry.category} onChange={e => setManualEntry(p => ({ ...p, category: e.target.value }))} placeholder="e.g., Electronics" maxLength={100} />
               </div>
               <Button type="submit" className="w-full" disabled={addEntryMutation.isPending}>
                 {addEntryMutation.isPending ? 'Adding...' : 'Add Entry'}
@@ -159,7 +181,7 @@ const DataUpload: React.FC = () => {
       <StaggerContainer className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {[
           { label: 'Total Uploads', value: totalUploads, loading: historyLoading },
-          { label: 'Total Rows', value: totalRowsUploaded.toLocaleString(), loading: historyLoading },
+          { label: 'Total Rows', value: formatNumber(totalRowsUploaded), loading: historyLoading },
           { label: 'Max File Size', value: `${MAX_FILE_SIZE_MB}MB`, loading: false, hideOnMobile: true },
         ].map((s, i) => (
           <FadeUp key={i}>
@@ -304,7 +326,7 @@ const DataUpload: React.FC = () => {
           <div>
             <h4 className="font-medium text-foreground mb-2">Required Columns</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              {['date - Transaction date (YYYY-MM-DD)', 'product - Product name or ID', 'quantity - Quantity sold', 'revenue - Total revenue'].map((col, i) => (
+              {['date - Transaction date (YYYY-MM-DD)', 'product - Product name or ID', 'quantity - Quantity sold', 'revenue - Total revenue'].map((col) => (
                 <li key={col} className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                   <code className="bg-muted px-1.5 py-0.5 rounded text-xs">{col.split(' - ')[0]}</code>
@@ -381,9 +403,9 @@ const DataUpload: React.FC = () => {
                   ) : (
                     <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-destructive" />
                   )}
-                  <span className={`text-xs sm:text-sm ${upload.status === 'success' ? 'text-success' : upload.status === 'processing' ? 'text-primary' : 'text-destructive'}`}>
-                    {upload.status === 'success' ? 'Completed' : upload.status === 'processing' ? 'Processing...' : 'Failed'}
-                  </span>
+                  <Badge variant={upload.status === 'success' ? 'default' : upload.status === 'processing' ? 'secondary' : 'destructive'} className="text-xs">
+                    {upload.status}
+                  </Badge>
                 </div>
               </motion.div>
             ))}

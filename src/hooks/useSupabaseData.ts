@@ -16,19 +16,29 @@ export const useHasSalesData = () => {
   });
 };
 
-// ─── Sales Data Hooks ───
+// ─── Sales Data Hooks (paginated to avoid 1000-row limit) ───
 
 export const useSalesData = () => {
   const { user } = useAuth();
   return useQuery({
     queryKey: ['sales_data', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('sales_data')
-        .select('*')
-        .order('date', { ascending: true });
-      if (error) throw error;
-      return data || [];
+      const allData: any[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from('sales_data')
+          .select('*')
+          .order('date', { ascending: true })
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allData.push(...data);
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      return allData;
     },
     enabled: !!user,
   });
@@ -40,11 +50,22 @@ export const useSalesStats = () => {
   return useQuery({
     queryKey: ['sales_stats', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('sales_data')
-        .select('date, product, quantity, revenue, category');
-      if (error) throw error;
-      const rows = data || [];
+      // Select only needed columns for stats computation
+      const allRows: any[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from('sales_data')
+          .select('date, product, quantity, revenue, category')
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allRows.push(...data);
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      const rows = allRows;
       
       const totalRevenue = rows.reduce((s, r) => s + Number(r.revenue), 0);
       const totalProducts = rows.reduce((s, r) => s + r.quantity, 0);
@@ -159,15 +180,27 @@ export const useUploadToSupabase = () => {
         for (const line of chunk) {
           const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
           if (cols.length < 4 || !cols[dateIdx]) continue;
+
+          // Validate date format
+          const dateVal = cols[dateIdx];
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(dateVal)) continue;
+
+          const qty = parseInt(cols[quantityIdx]);
+          const rev = parseFloat(cols[revenueIdx]);
+          if (isNaN(qty) || isNaN(rev)) continue;
+
+          const product = cols[productIdx]?.substring(0, 200);
+          if (!product) continue;
+
           rows.push({
             user_id: user.id,
-            date: cols[dateIdx],
-            product: cols[productIdx],
-            quantity: parseInt(cols[quantityIdx]) || 0,
-            revenue: parseFloat(cols[revenueIdx]) || 0,
-            category: categoryIdx !== -1 ? cols[categoryIdx] || null : null,
-            customer_id: customerIdx !== -1 ? cols[customerIdx] || null : null,
-            transaction_id: transactionIdx !== -1 ? cols[transactionIdx] || null : null,
+            date: dateVal,
+            product,
+            quantity: qty,
+            revenue: rev,
+            category: categoryIdx !== -1 ? (cols[categoryIdx]?.substring(0, 100) || null) : null,
+            customer_id: customerIdx !== -1 ? (cols[customerIdx]?.substring(0, 100) || null) : null,
+            transaction_id: transactionIdx !== -1 ? (cols[transactionIdx]?.substring(0, 100) || null) : null,
           });
         }
         if (rows.length > 0) {

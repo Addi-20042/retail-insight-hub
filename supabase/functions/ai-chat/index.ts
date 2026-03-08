@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface ChatMessage {
@@ -16,13 +16,43 @@ interface ChatRequest {
   stream?: boolean;
 }
 
+// Input sanitization helpers
+const sanitizeString = (s: string, maxLen = 2000): string =>
+  typeof s === "string" ? s.trim().substring(0, maxLen) : "";
+
+const isValidRole = (role: string): role is "user" | "assistant" | "system" =>
+  ["user", "assistant", "system"].includes(role);
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { messages, stream = true }: ChatRequest = await req.json();
+    const body = await req.json();
+
+    // Validate request structure
+    if (!body.messages || !Array.isArray(body.messages) || body.messages.length === 0) {
+      return new Response(JSON.stringify({ error: "Messages array is required" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (body.messages.length > 50) {
+      return new Response(JSON.stringify({ error: "Too many messages (max 50)" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Sanitize messages
+    const messages: ChatMessage[] = body.messages
+      .filter((m: any) => m && typeof m.content === "string" && isValidRole(m.role))
+      .map((m: any) => ({
+        role: m.role as ChatMessage["role"],
+        content: sanitizeString(m.content, 4000),
+      }));
+
+    const stream = typeof body.stream === "boolean" ? body.stream : true;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -40,13 +70,11 @@ serve(async (req) => {
           global: { headers: { Authorization: authHeader } },
         });
 
-        // Verify user
         const token = authHeader.replace("Bearer ", "");
         const { data: claimsData } = await supabase.auth.getClaims(token);
         const userId = claimsData?.claims?.sub;
 
         if (userId) {
-          // Fetch compact summary — select only what we need
           const { data: rows } = await supabase
             .from("sales_data")
             .select("date, product, quantity, revenue, category")
@@ -59,7 +87,6 @@ serve(async (req) => {
             const dates = rows.map((r) => r.date).sort();
             const dateRange = `${dates[0]} to ${dates[dates.length - 1]}`;
 
-            // Top 5 products by revenue
             const productMap = new Map<string, number>();
             rows.forEach((r) => {
               productMap.set(r.product, (productMap.get(r.product) || 0) + Number(r.revenue));
@@ -70,7 +97,6 @@ serve(async (req) => {
               .map(([p, rev]) => `${p} (₹${Math.round(rev).toLocaleString("en-IN")})`)
               .join(", ");
 
-            // Category breakdown
             const categoryMap = new Map<string, number>();
             rows.forEach((r) => {
               if (r.category) {
@@ -82,7 +108,6 @@ serve(async (req) => {
               .map(([c, rev]) => `${c}: ₹${Math.round(rev).toLocaleString("en-IN")}`)
               .join(", ");
 
-            // Monthly trend (last 6 months)
             const monthMap = new Map<string, number>();
             rows.forEach((r) => {
               const month = r.date.substring(0, 7);
@@ -115,7 +140,6 @@ IMPORTANT: Answer all questions using this real data. Be specific with the actua
         }
       } catch (e) {
         console.error("Error fetching user data:", e);
-        // continue without data context
       }
     }
 
