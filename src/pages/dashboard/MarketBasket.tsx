@@ -109,13 +109,21 @@ const MarketBasket: React.FC = () => {
             </StaggerContainer>
 
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                >
-                  <RefreshCw className="w-8 h-8 text-muted-foreground" />
-                </motion.div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="bg-card rounded-xl p-5 border border-border/50 animate-pulse">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="h-9 w-24 bg-muted rounded-lg" />
+                      <div className="w-5 h-5 bg-muted rounded" />
+                      <div className="h-9 w-24 bg-muted rounded-lg" />
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-1"><div className="h-3 w-12 bg-muted rounded" /><div className="h-4 w-10 bg-muted rounded mt-1" /></div>
+                      <div className="space-y-1"><div className="h-3 w-16 bg-muted rounded" /><div className="h-4 w-10 bg-muted rounded mt-1" /></div>
+                      <div className="space-y-1"><div className="h-3 w-8 bg-muted rounded" /><div className="h-4 w-10 bg-muted rounded mt-1" /></div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : searchResults.length > 0 ? (
               <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 gap-4">

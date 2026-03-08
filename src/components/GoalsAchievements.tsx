@@ -293,7 +293,20 @@ const GoalsAchievements: React.FC = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {goalsLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading goals...</div>
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="p-4 rounded-lg border border-border animate-pulse">
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded-full bg-muted mt-0.5" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-40 bg-muted rounded" />
+                      <div className="h-3 w-64 bg-muted rounded" />
+                      <div className="h-2 w-full bg-muted rounded-full mt-3" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : goals.length === 0 ? (
             <div className="text-center py-8">
               <Target className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
