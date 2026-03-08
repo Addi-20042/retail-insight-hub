@@ -60,7 +60,7 @@ const DashboardLayout: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-background overflow-x-hidden max-w-[100vw]">
       {/* Desktop Sidebar */}
       <div
         className={`hidden lg:block fixed left-0 top-0 h-screen z-30 transition-transform duration-300 ${
@@ -79,7 +79,7 @@ const DashboardLayout: React.FC = () => {
 
       {/* Main Content Area */}
       <div
-        className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${
+        className={`flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-300 ${
           sidebarCollapsed ? 'lg:pl-0' : 'lg:pl-64'
         }`}
       >

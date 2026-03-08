@@ -65,7 +65,7 @@ const SalesForecast: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8 min-w-0 max-w-full">
       <PageHeader title="Sales Forecast" description="AI-powered demand prediction using regression models">
         <Button variant="outline" size="icon" onClick={async () => { await exportForecastToPdf({ days: forecastDays, accuracy: '94.2%', total: `₹${totalPredicted.toLocaleString('en-IN')}`, avgDaily: `₹${avgDaily.toLocaleString('en-IN')}`, trend: trend ? 'Upward' : 'Downward', forecastRows: forecastData }); toast.success('PDF exported with chart & data'); }} title="Export to PDF">
           <Download className="w-4 h-4" />
@@ -93,7 +93,7 @@ const SalesForecast: React.FC = () => {
       )}
 
       {/* Stats */}
-      <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <StaggerContainer className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
         {isLoading ? (
           <>
             <FadeUp><StatCardSkeleton /></FadeUp>
@@ -162,7 +162,7 @@ const SalesForecast: React.FC = () => {
           <div className="h-[400px] flex items-center justify-center text-muted-foreground">No forecast data available</div>
         ) : (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.6 }}>
-            <ResponsiveContainer width="100%" height={300} className="sm:[&]:!h-[400px]">
+            <ResponsiveContainer width="100%" height={280}>
               <ComposedChart data={chartData}>
                 <defs>
                   <linearGradient id="colorForecast" x1="0" y1="0" x2="0" y2="1">
@@ -175,8 +175,8 @@ const SalesForecast: React.FC = () => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => { const d = new Date(v); return `${d.getDate()}/${d.getMonth()+1}`; }} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
+                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontSize: 10 }} interval="preserveStartEnd" tickFormatter={(v) => { const d = new Date(v); return `${d.getDate()}/${d.getMonth()+1}`; }} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontSize: 10 }} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} width={45} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} 
                   formatter={(value: number | null, name: string) => {

@@ -43,7 +43,7 @@ const CustomerSegmentation: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8 min-w-0 max-w-full">
       <PageHeader title="Customer Segmentation" description="K-Means clustering analysis of customer buying patterns">
         <Button variant="outline" size="icon" onClick={async () => {
           const chartImage = await captureChartAsImage('.recharts-wrapper');
@@ -75,17 +75,17 @@ const CustomerSegmentation: React.FC = () => {
             {isLoading ? <StatCardSkeleton /> : (
               <HoverCard>
                 <div className="stat-card">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
                     <motion.div
-                      className={`w-10 h-10 rounded-lg bg-${stat.color}/10 flex items-center justify-center`}
+                      className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-${stat.color}/10 flex items-center justify-center shrink-0`}
                       whileHover={{ rotate: 10 }}
                       transition={{ type: 'spring' }}
                     >
-                      <stat.icon className={`w-5 h-5 text-${stat.color}`} />
+                      <stat.icon className={`w-4 h-4 sm:w-5 sm:h-5 text-${stat.color}`} />
                     </motion.div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">{stat.label}</p>
-                      <p className="text-xl font-bold text-foreground">{stat.value}</p>
+                    <div className="min-w-0">
+                      <p className="text-[10px] sm:text-sm text-muted-foreground truncate">{stat.label}</p>
+                      <p className="text-sm sm:text-xl font-bold text-foreground truncate">{stat.value}</p>
                     </div>
                   </div>
                 </div>
@@ -102,9 +102,9 @@ const CustomerSegmentation: React.FC = () => {
             <div className="h-[300px] flex items-center justify-center text-muted-foreground">No segment data</div>
           ) : (
             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, duration: 0.5 }}>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={260}>
                 <PieChart>
-                  <Pie data={segmentData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={4} dataKey="count" nameKey="name">
+                  <Pie data={segmentData} cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={4} dataKey="count" nameKey="name">
                     {segmentData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.color} />))}
                   </Pie>
                   <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }} formatter={(value: number) => [`${value} customers`, '']} />

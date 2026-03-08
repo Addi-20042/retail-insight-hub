@@ -70,7 +70,7 @@ const MarketBasket: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8 min-w-0 max-w-full">
       <PageHeader title="Market Basket Analysis" description="Discover products frequently purchased together using Association Rule Mining">
         <Button variant="outline" size="icon" onClick={() => { exportBasketToPdf(allRules); toast.success('PDF exported'); }} title="Export to PDF">
           <Download className="w-4 h-4" />
@@ -97,7 +97,7 @@ const MarketBasket: React.FC = () => {
       )}
 
       {/* Summary Stats */}
-      <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <StaggerContainer className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
         {isLoading ? (
           <><FadeUp><StatCardSkeleton /></FadeUp><FadeUp><StatCardSkeleton /></FadeUp><FadeUp><StatCardSkeleton /></FadeUp></>
         ) : (
@@ -219,33 +219,31 @@ const MarketBasket: React.FC = () => {
                 const badge = getLiftBadge(rule.lift);
                 return (
                   <FadeUp key={`${rule.productA}-${rule.productB}-${index}`}>
-                    <HoverCard className="bg-card rounded-xl p-5 border border-border/50">
-                      <div className="flex items-center gap-3 mb-4 flex-wrap">
-                        <motion.div whileHover={{ scale: 1.05 }} className="px-3 py-2 bg-primary/10 rounded-lg text-primary font-medium text-sm">
+                    <HoverCard className="bg-card rounded-xl p-4 sm:p-5 border border-border/50">
+                      <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 flex-wrap">
+                        <motion.div whileHover={{ scale: 1.05 }} className="px-2 sm:px-3 py-1.5 sm:py-2 bg-primary/10 rounded-lg text-primary font-medium text-xs sm:text-sm max-w-[40%] truncate">
                           {rule.productA}
                         </motion.div>
-                        <motion.div animate={{ x: [0, 4, 0] }} transition={{ repeat: Infinity, duration: 1.5 }}>
-                          <ArrowRight className="w-5 h-5 text-muted-foreground" />
-                        </motion.div>
-                        <motion.div whileHover={{ scale: 1.05 }} className="px-3 py-2 bg-chart-secondary/10 rounded-lg text-chart-secondary font-medium text-sm">
+                        <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <motion.div whileHover={{ scale: 1.05 }} className="px-2 sm:px-3 py-1.5 sm:py-2 bg-chart-secondary/10 rounded-lg text-chart-secondary font-medium text-xs sm:text-sm max-w-[40%] truncate">
                           {rule.productB}
                         </motion.div>
-                        <Badge variant={badge.variant} className="ml-auto text-xs">
+                        <Badge variant={badge.variant} className="ml-auto text-[10px] sm:text-xs">
                           {badge.label}
                         </Badge>
                       </div>
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-3 gap-2 sm:gap-4">
                         <div>
-                          <p className="text-xs text-muted-foreground">Support</p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">Support</p>
                           <p className="font-semibold text-foreground">{(rule.support * 100).toFixed(1)}%</p>
                         </div>
                         <div>
-                          <p className="text-xs text-muted-foreground">Confidence</p>
-                          <p className={`font-semibold ${getConfidenceColor(rule.confidence)}`}>{(rule.confidence * 100).toFixed(1)}%</p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">Confidence</p>
+                          <p className={`text-sm font-semibold ${getConfidenceColor(rule.confidence)}`}>{(rule.confidence * 100).toFixed(1)}%</p>
                         </div>
                         <div>
-                          <p className="text-xs text-muted-foreground">Lift</p>
-                          <p className="font-semibold text-foreground">{rule.lift.toFixed(2)}x</p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">Lift</p>
+                          <p className="text-sm font-semibold text-foreground">{rule.lift.toFixed(2)}x</p>
                         </div>
                       </div>
                     </HoverCard>
