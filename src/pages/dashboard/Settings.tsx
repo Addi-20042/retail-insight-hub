@@ -31,7 +31,6 @@ interface UserSettings {
   pushNotifications: boolean;
   weeklyReports: boolean;
   exportFormat: string;
-  language: string;
   timezone: string;
   twoFactorEnabled: boolean;
   sessionTimeout: string;
@@ -51,7 +50,6 @@ const Settings: React.FC = () => {
       pushNotifications: true,
       weeklyReports: false,
       exportFormat: 'pdf',
-      language: 'en',
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York',
       twoFactorEnabled: false,
       sessionTimeout: '30',
