@@ -20,7 +20,7 @@ const DataUpload: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [manualOpen, setManualOpen] = useState(false);
-  const [manualEntry, setManualEntry] = useState({ date: '', product: '', quantity: '', revenue: '', category: '' });
+  const [manualEntry, setManualEntry] = useState({ date: '', product: '', quantity: '', revenue: '', category: '', transaction_id: '', customer_id: '' });
   const [previewData, setPreviewData] = useState<{ headers: string[]; rows: string[][]; fileName: string } | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -123,9 +123,11 @@ const DataUpload: React.FC = () => {
         quantity: result.data.quantity,
         revenue: result.data.revenue,
         category: result.data.category || undefined,
+        transaction_id: manualEntry.transaction_id || undefined,
+        customer_id: manualEntry.customer_id || undefined,
       });
       toast.success('Entry added successfully');
-      setManualEntry({ date: '', product: '', quantity: '', revenue: '', category: '' });
+      setManualEntry({ date: '', product: '', quantity: '', revenue: '', category: '', transaction_id: '', customer_id: '' });
       setManualOpen(false);
     } catch (error: any) { toast.error(`Failed: ${error.message}`); }
   };
@@ -168,6 +170,20 @@ const DataUpload: React.FC = () => {
               <div className="space-y-2">
                 <Label>Category (optional)</Label>
                 <Input value={manualEntry.category} onChange={e => setManualEntry(p => ({ ...p, category: e.target.value }))} placeholder="e.g., Electronics" maxLength={100} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Transaction ID (optional)</Label>
+                  <Input value={manualEntry.transaction_id} onChange={e => setManualEntry(p => ({ ...p, transaction_id: e.target.value }))} placeholder="e.g., TXN-001" maxLength={100} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Customer ID (optional)</Label>
+                  <Input value={manualEntry.customer_id} onChange={e => setManualEntry(p => ({ ...p, customer_id: e.target.value }))} placeholder="e.g., CUST-001" maxLength={100} />
+                </div>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground">
+                <p className="font-medium text-foreground mb-1">💡 Tip for Market Basket Analysis</p>
+                <p>Add Transaction ID and Customer ID to enable product association discovery. Items with the same Transaction ID are treated as purchased together.</p>
               </div>
               <Button type="submit" className="w-full" disabled={addEntryMutation.isPending}>
                 {addEntryMutation.isPending ? 'Adding...' : 'Add Entry'}
@@ -336,16 +352,23 @@ const DataUpload: React.FC = () => {
             </ul>
           </div>
           <div>
-            <h4 className="font-medium text-foreground mb-2">Optional Columns</h4>
+            <h4 className="font-medium text-foreground mb-2">Recommended Columns</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              {['category - Product category', 'customer_id - Customer identifier', 'transaction_id - Transaction ID'].map((col) => (
-                <li key={col} className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground shrink-0" />
-                  <code className="bg-muted px-1.5 py-0.5 rounded text-xs">{col.split(' - ')[0]}</code>
-                  <span className="hidden sm:inline">- {col.split(' - ')[1]}</span>
+              {[
+                { col: 'transaction_id', desc: 'Groups products bought together (required for Market Basket Analysis)', highlight: true },
+                { col: 'customer_id', desc: 'Customer identifier (enables segmentation & basket fallback)', highlight: true },
+                { col: 'category', desc: 'Product category (enables category breakdowns)', highlight: false },
+              ].map((item) => (
+                <li key={item.col} className="flex items-center gap-2">
+                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${item.highlight ? 'bg-warning' : 'bg-muted-foreground'}`} />
+                  <code className="bg-muted px-1.5 py-0.5 rounded text-xs">{item.col}</code>
+                  <span className="hidden sm:inline">- {item.desc}</span>
                 </li>
               ))}
             </ul>
+            <div className="mt-3 p-2 bg-warning/10 border border-warning/20 rounded-lg text-xs text-warning">
+              ⚠️ Without <code className="font-semibold">transaction_id</code>, Market Basket Analysis cannot determine which products are bought together.
+            </div>
           </div>
         </div>
       </motion.div>
