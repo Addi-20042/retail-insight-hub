@@ -72,7 +72,7 @@ const DashboardLayout: React.FC = () => {
 
       {/* Mobile Sidebar Sheet */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="p-0 w-64">
+        <SheetContent side="left" className="p-0 w-[280px] max-w-[85vw]">
           <Sidebar onNavigate={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>
