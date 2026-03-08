@@ -4,15 +4,17 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recha
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useSegmentation } from '@/hooks/useApiData';
-import { useSalesData } from '@/hooks/useSupabaseData';
+import { useSalesData, useSalesStats } from '@/hooks/useSupabaseData';
 import { EmptyState } from '@/components/EmptyState';
 import { 
-  StaggerContainer, FadeUp, PageHeader, StatCardSkeleton, ChartSkeleton, TableSkeleton, HoverCard
+  StaggerContainer, FadeUp, PageHeader, StatCardSkeleton, ChartSkeleton, TableSkeleton, HoverCard, ShimmerSkeleton
 } from '@/components/ui/animated-container';
+import CategoryTreemap from '@/components/charts/CategoryTreemap';
 
 const CustomerSegmentation: React.FC = () => {
   const { data, isLoading, isError, refetch } = useSegmentation();
   const { data: salesData } = useSalesData();
+  const { data: salesStats } = useSalesStats();
 
   const hasData = salesData && salesData.length > 0;
   const segmentData = data?.segments || [];
@@ -150,6 +152,30 @@ const CustomerSegmentation: React.FC = () => {
           )}
         </FadeUp>
       </StaggerContainer>
+
+      {/* Category Revenue Treemap */}
+      {isLoading ? (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} className="chart-container">
+          <ShimmerSkeleton className="h-5 w-52 mb-2" />
+          <ShimmerSkeleton className="h-3 w-72 mb-4" />
+          <ShimmerSkeleton className="h-[300px] w-full rounded-lg" />
+        </motion.div>
+      ) : salesStats?.categoryBreakdown && salesStats.categoryBreakdown.length > 0 && (
+        <FadeUp>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="chart-container"
+          >
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-foreground">Category Revenue Breakdown</h3>
+              <p className="text-sm text-muted-foreground">Proportional view of revenue by product category</p>
+            </div>
+            <CategoryTreemap data={salesStats.categoryBreakdown} />
+          </motion.div>
+        </FadeUp>
+      )}
 
       {/* Product Segments Table */}
       {isLoading ? (
