@@ -35,9 +35,9 @@ serve(async (req) => {
       });
     }
 
-    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    if (!RESEND_API_KEY) {
-      return new Response(JSON.stringify({ error: "Email service not configured" }), {
+    const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
+    if (!BREVO_API_KEY) {
+      return new Response(JSON.stringify({ error: "Email service not configured. BREVO_API_KEY is missing." }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
