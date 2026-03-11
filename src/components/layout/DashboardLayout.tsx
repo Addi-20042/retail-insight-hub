@@ -26,6 +26,7 @@ const DashboardLayout: React.FC = () => {
 
   useKeyboardShortcuts();
   const { recheckAchievements } = useAchievementChecker();
+  useRealtimeSales();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
