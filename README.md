@@ -67,14 +67,14 @@ RetailMind is a comprehensive retail analytics web application that leverages ma
 | PyJWT | JWT authentication |
 | SQLite | Local database |
 
-### Cloud Services (Lovable Cloud)
+### Cloud Services (Cloud)
 | Service | Purpose |
 |---------|---------|
 | PostgreSQL | Production database |
 | Edge Functions | Serverless backend logic |
 | Authentication | User management |
 | Real-time | Live notifications |
-| Lovable AI Gateway | Gemini AI integration |
+| AI Gateway | Gemini AI integration |
 
 ## 📁 Project Structure
 

@@ -11,10 +11,10 @@ from services.preprocessing import (
     prepare_segmentation_data,
     prepare_basket_data
 )
-from services.forecasting import train_model as train_forecast
-from services.segmentation import train_model as train_segmentation
-from services.basket_analysis import train_basket_model
-from services.alerts_engine import generate_all_alerts
+# from services.forecasting import train_model as train_forecast
+# from services.segmentation import train_model as train_segmentation
+# from services.basket_analysis import train_basket_model
+# from services.alerts_engine import generate_all_alerts
 from database.db import get_supabase
 
 upload_bp = Blueprint('upload', __name__)
@@ -118,17 +118,17 @@ def upload_file():
         
         training_results = {}
         
-        if len(daily_sales) > 0:
-            training_results['forecast'] = train_forecast(daily_sales)
+        # if len(daily_sales) > 0:
+        #     training_results['forecast'] = train_forecast(daily_sales)
         
-        if len(product_data) > 0:
-            training_results['segmentation'] = train_segmentation(product_data)
+        # if len(product_data) > 0:
+        #     training_results['segmentation'] = train_segmentation(product_data)
         
-        if len(basket_data) > 0:
-            training_results['basket'] = train_basket_model(basket_data)
+        # if len(basket_data) > 0:
+        #     training_results['basket'] = train_basket_model(basket_data)
         
-        if len(daily_sales) > 0:
-            generate_all_alerts(daily_sales)
+        # if len(daily_sales) > 0:
+        #     generate_all_alerts(daily_sales)
         
         # Clean up temp file
         try:

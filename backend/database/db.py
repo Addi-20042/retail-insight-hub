@@ -3,26 +3,43 @@ Supabase database client
 Replaces SQLite with Supabase for all data operations
 """
 import os
-from supabase import create_client, Client
 from config import get_config
 
-_supabase_client: Client = None
+# Move import inside try to catch import errors
+# try:
+#     from supabase import create_client, Client
+# except ImportError:
+    # Fallback if supabase has issues
+create_client = None
+Client = None
 
-def get_supabase() -> Client:
+_supabase_client = None
+
+def get_db_connection():
+    """Get database connection (returns Supabase client for compatibility)"""
+    return get_supabase()
+
+def get_supabase():
     """Get Supabase client instance (singleton)"""
     global _supabase_client
     if _supabase_client is None:
+        if create_client is None:
+            print("[WARNING] Supabase not available - using demo mode")
+            return None
+        
         config = get_config()
         url = config.SUPABASE_URL
         key = config.SUPABASE_SERVICE_KEY
         
-        if not url or not key:
-            raise RuntimeError(
-                "SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in environment. "
-                "Get these from your Lovable Cloud project settings."
-            )
+        if not url or not key or 'placeholder' in url:
+            print("[INFO] Demo mode - Supabase credentials not configured")
+            return None
         
-        _supabase_client = create_client(url, key)
+        try:
+            _supabase_client = create_client(url, key)
+        except Exception as e:
+            print(f"[WARNING] Supabase connection failed: {e}")
+            return None
     
     return _supabase_client
 
@@ -32,10 +49,11 @@ def init_db(db_path: str = None):
     try:
         client = get_supabase()
         # Test connection
-        result = client.table('sales_data').select('id').limit(1).execute()
-        print("✅ Connected to Supabase database")
+        if client:
+            result = client.table('sales_data').select('id').limit(1).execute()
+            print("[SUCCESS] Connected to Supabase database")
     except Exception as e:
-        print(f"⚠️ Supabase connection warning: {e}")
+        print(f"[WARNING] Supabase connection warning: {e}")
         print("  Backend will still start but database operations may fail.")
         print("  Set SUPABASE_URL and SUPABASE_SERVICE_KEY in your .env file.")
 
