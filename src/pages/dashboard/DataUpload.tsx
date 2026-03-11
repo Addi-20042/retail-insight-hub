@@ -126,7 +126,10 @@ const DataUpload: React.FC = () => {
         transaction_id: manualEntry.transaction_id || undefined,
         customer_id: manualEntry.customer_id || undefined,
       });
-      toast.success('Entry added successfully');
+      toast.success('🎉 New Sale Entry Added!', {
+        description: `${result.data.product} — ${result.data.quantity} unit(s), ₹${Number(result.data.revenue).toLocaleString()}`,
+        duration: 5000,
+      });
       setManualEntry({ date: '', product: '', quantity: '', revenue: '', category: '', transaction_id: '', customer_id: '' });
       setManualOpen(false);
     } catch (error: any) { toast.error(`Failed: ${error.message}`); }
