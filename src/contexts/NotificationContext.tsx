@@ -43,7 +43,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return [];
   });
   
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     const newNotification: Notification = {

@@ -11,6 +11,7 @@ import { CommandPalette } from '@/components/CommandPalette';
 import { KeyboardShortcuts, useKeyboardShortcuts } from '@/components/KeyboardShortcuts';
 import AIChatAssistant from '@/components/AIChatAssistant';
 import { useAchievementChecker } from '@/hooks/useAchievementChecker';
+import { useRealtimeSales } from '@/hooks/useRealtimeSales';
 
 // Context to expose recheckAchievements globally
 const AchievementContext = createContext<{ recheckAchievements: () => Promise<void> }>({ recheckAchievements: async () => {} });
@@ -25,6 +26,7 @@ const DashboardLayout: React.FC = () => {
 
   useKeyboardShortcuts();
   const { recheckAchievements } = useAchievementChecker();
+  useRealtimeSales();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
