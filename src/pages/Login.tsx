@@ -302,6 +302,9 @@ const Login: React.FC = () => {
                   authMode === 'login' ? 'Sign in' : 'Create account'
                 )}
               </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                New user? Click <span className="font-medium">Sign up</span> first. If account was created with Google, use Google login.
+              </p>
             </form>
 
             <div className="mt-6 text-center text-sm">
