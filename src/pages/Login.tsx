@@ -56,9 +56,11 @@ const Login: React.FC = () => {
     e.preventDefault();
     setFieldErrors({});
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Validate with Zod
     if (authMode === 'signup') {
-      const result = signupSchema.safeParse({ email, password, confirmPassword });
+      const result = signupSchema.safeParse({ email: normalizedEmail, password, confirmPassword });
       if (!result.success) {
         const errors: Record<string, string> = {};
         result.error.errors.forEach(err => {
@@ -69,7 +71,7 @@ const Login: React.FC = () => {
         return;
       }
     } else {
-      const result = loginSchema.safeParse({ email, password });
+      const result = loginSchema.safeParse({ email: normalizedEmail, password });
       if (!result.success) {
         const errors: Record<string, string> = {};
         result.error.errors.forEach(err => {
@@ -80,30 +82,41 @@ const Login: React.FC = () => {
         return;
       }
     }
-    
+
     setIsSubmitting(true);
     try {
       if (authMode === 'signup') {
-        const { error } = await supabase.auth.signUp({
-          email,
+        const { data, error } = await supabase.auth.signUp({
+          email: normalizedEmail,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/dashboard`,
           },
         });
         if (error) throw error;
-        toast.success('Check your email to confirm your account!');
+
+        if (data.session) {
+          toast.success('Account created successfully!');
+        } else {
+          toast.success('Account created — please verify from your email before login.');
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
-          email,
+          email: normalizedEmail,
           password,
         });
         if (error) throw error;
         toast.success('Welcome back!');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Auth error:', error);
-      toast.error(error.message || 'Authentication failed');
+      const message = error instanceof Error ? error.message : 'Authentication failed';
+
+      if (message.toLowerCase().includes('invalid login credentials')) {
+        toast.error('Invalid credentials. Use Sign up for new email, or Google if that account was created with Google.');
+      } else {
+        toast.error(message);
+      }
     } finally {
       setIsSubmitting(false);
     }
