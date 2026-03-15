@@ -1,14 +1,15 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
   BarChart3, Users, ShoppingCart, Upload, LogOut,
   LayoutDashboard, Brain, Settings, Target, Table2
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
-
 
 const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Overview', end: true },
@@ -28,6 +29,25 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ onNavigate }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
+
+  const { data: profile } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('display_name, avatar_url')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const displayName = profile?.display_name || user?.name || 'User';
+  const avatarUrl = profile?.avatar_url || user?.avatar;
 
   const handleLogout = () => {
     logout();
@@ -57,10 +77,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onNavigate }) => {
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => {
-          const isActive = item.end 
+          const isActive = item.end
             ? location.pathname === item.path
             : location.pathname.startsWith(item.path);
-          
+
           return (
             <NavLink
               key={item.path}
@@ -109,14 +129,14 @@ const Sidebar: React.FC<SidebarProps> = ({ onNavigate }) => {
         <div className="flex items-center gap-2.5 mb-2 px-2">
           <div className="relative">
             <img
-              src={user?.avatar}
-              alt={user?.name}
+              src={avatarUrl}
+              alt={displayName}
               className="w-8 h-8 rounded-full bg-sidebar-accent object-cover"
             />
             <div className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-success border border-sidebar-background" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-sidebar-foreground truncate">{user?.name}</p>
+            <p className="text-xs font-semibold text-sidebar-foreground truncate">{displayName}</p>
             <p className="text-[10px] text-sidebar-muted truncate">{user?.email}</p>
           </div>
         </div>
