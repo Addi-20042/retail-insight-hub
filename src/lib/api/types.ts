@@ -96,6 +96,74 @@ export interface UploadResponse {
   models_retrained: string[];
 }
 
+// POS / Realtime Scanning Types
+export interface ProductRecord {
+  id: string;
+  user_id: string;
+  barcode: string;
+  sku: string | null;
+  name: string;
+  category: string | null;
+  unit_price: number;
+  stock_quantity: number;
+  reorder_level: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PosTransactionRecord {
+  id: string;
+  user_id: string;
+  transaction_number: string;
+  customer_id: string | null;
+  cashier_name: string | null;
+  device_id: string | null;
+  status: 'open' | 'completed' | 'cancelled';
+  item_count: number;
+  total_amount: number;
+  started_at: string;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PosTransactionItemRecord {
+  id: string;
+  user_id: string;
+  transaction_id: string;
+  product_id: string;
+  barcode: string;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  line_total: number;
+  scan_id: string | null;
+  scanned_at: string;
+  created_at: string;
+}
+
+export interface PosActionResponse {
+  ok: boolean;
+  error?: string;
+  message?: string;
+  transaction?: PosTransactionRecord;
+  restored_items?: number;
+  seeded?: number;
+}
+
+export interface PosScanResponse extends PosActionResponse {
+  duplicate?: boolean;
+  item?: PosTransactionItemRecord;
+  product?: {
+    id: string;
+    name: string;
+    barcode: string;
+    remaining_stock: number;
+  };
+  available_stock?: number;
+}
+
 // Health Check
 export interface HealthResponse {
   status: 'ok' | 'error';

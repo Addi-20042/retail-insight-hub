@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import type { Tables } from '@/integrations/supabase/types';
 
 // ─── Has Data (lightweight check) ───
 
@@ -325,5 +326,62 @@ export const useLogActivity = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activity_log'] });
     },
+  });
+};
+
+// POS Products
+
+export const useProducts = () => {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['products', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('name', { ascending: true });
+      if (error) throw error;
+      return (data || []) as Tables<'products'>[];
+    },
+    enabled: !!user,
+  });
+};
+
+// Active POS Transaction
+
+export const useActivePosTransaction = () => {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['pos', 'transaction', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('pos_transactions')
+        .select('*')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data as Tables<'pos_transactions'> | null;
+    },
+    enabled: !!user,
+  });
+};
+
+export const usePosTransactionItems = (transactionId?: string | null) => {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['pos', 'items', transactionId ?? 'none', user?.id],
+    queryFn: async () => {
+      if (!transactionId) return [] as Tables<'pos_transaction_items'>[];
+      const { data, error } = await supabase
+        .from('pos_transaction_items')
+        .select('*')
+        .eq('transaction_id', transactionId)
+        .order('scanned_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as Tables<'pos_transaction_items'>[];
+    },
+    enabled: !!user,
   });
 };

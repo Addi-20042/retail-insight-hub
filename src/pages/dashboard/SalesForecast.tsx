@@ -57,7 +57,7 @@ const SalesForecast: React.FC = () => {
           <EmptyState
             icon={<TrendingUp className="w-8 h-8 text-muted-foreground" />}
             title="No Data for Forecasting"
-            description="Upload sales data first to generate AI-powered demand predictions."
+            description="Upload sales data or use Live POS scans to generate AI-powered demand predictions."
           />
         </motion.div>
       </div>

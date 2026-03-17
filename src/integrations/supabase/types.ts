@@ -215,41 +215,194 @@ export type Database = {
         }
         Relationships: []
       }
+      products: {
+        Row: {
+          barcode: string
+          category: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          reorder_level: number
+          sku: string | null
+          stock_quantity: number
+          unit_price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          barcode: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          reorder_level?: number
+          sku?: string | null
+          stock_quantity?: number
+          unit_price?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          barcode?: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          reorder_level?: number
+          sku?: string | null
+          stock_quantity?: number
+          unit_price?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pos_transaction_items: {
+        Row: {
+          barcode: string
+          created_at: string
+          id: string
+          line_total: number
+          product_id: string
+          product_name: string
+          quantity: number
+          scan_id: string | null
+          scanned_at: string
+          transaction_id: string
+          unit_price: number
+          user_id: string
+        }
+        Insert: {
+          barcode: string
+          created_at?: string
+          id?: string
+          line_total?: number
+          product_id: string
+          product_name: string
+          quantity?: number
+          scan_id?: string | null
+          scanned_at?: string
+          transaction_id: string
+          unit_price?: number
+          user_id: string
+        }
+        Update: {
+          barcode?: string
+          created_at?: string
+          id?: string
+          line_total?: number
+          product_id?: string
+          product_name?: string
+          quantity?: number
+          scan_id?: string | null
+          scanned_at?: string
+          transaction_id?: string
+          unit_price?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pos_transactions: {
+        Row: {
+          cashier_name: string | null
+          completed_at: string | null
+          created_at: string
+          customer_id: string | null
+          device_id: string | null
+          id: string
+          item_count: number
+          started_at: string
+          status: string
+          total_amount: number
+          transaction_number: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cashier_name?: string | null
+          completed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          device_id?: string | null
+          id?: string
+          item_count?: number
+          started_at?: string
+          status?: string
+          total_amount?: number
+          transaction_number: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cashier_name?: string | null
+          completed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          device_id?: string | null
+          id?: string
+          item_count?: number
+          started_at?: string
+          status?: string
+          total_amount?: number
+          transaction_number?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sales_data: {
         Row: {
+          barcode: string | null
           category: string | null
           created_at: string
           customer_id: string | null
           date: string
+          device_id: string | null
           id: string
           product: string
+          product_id: string | null
           quantity: number
           revenue: number
+          source: string
           transaction_id: string | null
+          transaction_status: string
           user_id: string
         }
         Insert: {
+          barcode?: string | null
           category?: string | null
           created_at?: string
           customer_id?: string | null
           date: string
+          device_id?: string | null
           id?: string
           product: string
+          product_id?: string | null
           quantity?: number
           revenue?: number
+          source?: string
           transaction_id?: string | null
+          transaction_status?: string
           user_id: string
         }
         Update: {
+          barcode?: string | null
           category?: string | null
           created_at?: string
           customer_id?: string | null
           date?: string
+          device_id?: string | null
           id?: string
           product?: string
+          product_id?: string | null
           quantity?: number
           revenue?: number
+          source?: string
           transaction_id?: string | null
+          transaction_status?: string
           user_id?: string
         }
         Relationships: []
@@ -363,7 +516,42 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cancel_pos_transaction: {
+        Args: {
+          p_transaction_id: string
+        }
+        Returns: Json
+      }
+      complete_pos_transaction: {
+        Args: {
+          p_transaction_id: string
+        }
+        Returns: Json
+      }
+      process_pos_scan: {
+        Args: {
+          p_barcode: string
+          p_cashier_name?: string | null
+          p_customer_id?: string | null
+          p_device_id?: string | null
+          p_quantity?: number
+          p_scan_id?: string | null
+          p_transaction_id?: string | null
+        }
+        Returns: Json
+      }
+      seed_demo_products: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      start_pos_transaction: {
+        Args: {
+          p_cashier_name?: string | null
+          p_customer_id?: string | null
+          p_device_id?: string | null
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

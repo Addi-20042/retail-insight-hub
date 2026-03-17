@@ -1,259 +1,221 @@
-# RetailMind - AI-Powered Retail Analytics Platform
+# RetailMind
 
-RetailMind is a comprehensive retail analytics web application that leverages machine learning and AI to provide actionable insights for retail businesses. It combines powerful data analysis with an intuitive interface to help businesses make data-driven decisions.
+RetailMind is a retail analytics dashboard built with React, Vite, Supabase, and a small Flask service for local ML and utility endpoints. It combines sales analytics, live POS capture, notifications, scheduled reporting, and AI-assisted workflows in one app.
 
-## 🌟 Features
+## What is included
 
-### Core Analytics
-- **Sales Forecasting** - Linear regression-based demand prediction with interactive visualizations
-- **Customer Segmentation** - K-Means clustering to identify customer groups and behaviors
-- **Market Basket Analysis** - Association rule mining to discover product relationships
-- **Smart Alerts** - Automated anomaly detection for demand spikes and inventory issues
+- Email/password authentication plus Google sign-in
+- Dashboard overview with revenue and product metrics
+- Sales forecasting
+- Customer segmentation
+- Market basket analysis
+- CSV upload and dataset management
+- Live POS transactions with demo barcode seeding
+- Realtime notifications, activity feed, and low-stock alerts
+- Goal tracking and profile/settings management
+- Scheduled report workflow
+- Supabase edge functions for analytics, alerts, AI chat, POS, and report sending
 
-### AI Assistant
-- **RetailMind AI** - Gemini-powered chat assistant for real-time analytics guidance
-- Natural language queries about your retail data
-- Contextual help and recommendations
-
-### Productivity Tools
-- **Command Palette** (⌘K) - Quick navigation and actions
-- **Quick Notes** - Persistent note-taking with local storage
-- **Keyboard Shortcuts** - Efficient navigation throughout the app
-- **Real-time Notifications** - Live alerts for anomalies and insights
-
-### Goals & Gamification
-- **Goal Tracking** - Set and monitor analytics goals
-- **Achievements** - Unlock badges as you explore features
-- **Progress Tracking** - Visual progress indicators
-
-### Reporting & Automation
-- **PDF Export** - Branded analytics reports using jsPDF
-- **Scheduled Reports** - Automated email delivery of reports
-- **Data Export** - Export your data in multiple formats
-
-### Authentication & Security
-- **Multi-Provider Auth** - Google, GitHub, Facebook, and Email/Password
-- **Two-Factor Authentication** - Enhanced account security (UI ready)
-- **Session Management** - Track and manage active sessions
-- **Password Reset** - Complete password recovery flow
-
-## 🛠️ Tech Stack
+## Stack
 
 ### Frontend
-| Technology | Purpose |
-|------------|---------|
-| React 18 | UI framework |
-| TypeScript | Type-safe development |
-| Vite | Build tool and dev server |
-| Tailwind CSS | Utility-first styling |
-| shadcn/ui | Component library |
-| React Router | Client-side routing |
-| TanStack Query | Data fetching and caching |
-| Recharts | Data visualization |
-| Framer Motion | Animations |
-| Lucide React | Icon library |
-| jsPDF + AutoTable | PDF generation |
-| react-markdown | Markdown rendering |
 
-### Backend (Flask)
-| Technology | Purpose |
-|------------|---------|
-| Python 3.11+ | Programming language |
-| Flask 3.0 | Web framework |
-| Flask-CORS | Cross-origin support |
-| Pandas | Data manipulation |
-| NumPy | Numerical computing |
-| Scikit-learn | Machine learning |
-| PyJWT | JWT authentication |
-| SQLite | Local database |
+- React 18
+- TypeScript
+- Vite
+- Tailwind CSS
+- shadcn/ui
+- TanStack Query
+- Recharts
+- Framer Motion
+- Supabase JS
 
-### Cloud Services (Cloud)
-| Service | Purpose |
-|---------|---------|
-| PostgreSQL | Production database |
-| Edge Functions | Serverless backend logic |
-| Authentication | User management |
-| Real-time | Live notifications |
-| AI Gateway | Gemini AI integration |
+### Backend
 
-## 📁 Project Structure
+- Flask
+- Pandas
+- NumPy
+- scikit-learn
 
+### Platform
+
+- Supabase Auth
+- Supabase Postgres
+- Supabase Realtime
+- Supabase Edge Functions
+
+## Main app flows
+
+### Authentication
+
+- Email/password login and registration are handled through Supabase Auth.
+- Google sign-in uses a Google OAuth client on the frontend and Supabase identity sign-in.
+- Password reset is routed through `/reset-password`.
+
+### Analytics
+
+- Sales forecasting reads sales history and now falls back gracefully when POS-only data exists.
+- Customer segmentation reads uploaded and POS-generated sales records.
+- Market basket analysis works from uploaded sales data and multi-item POS transactions.
+
+### Live POS
+
+- Seed demo products directly in the app.
+- Start a transaction, scan or simulate a barcode, and watch cart totals, inventory, activity, and alerts update.
+- POS writes sales records that feed the analytics modules.
+
+### Reporting and email
+
+- Scheduled reports are stored in Supabase.
+- Report delivery depends on the deployed `send-report` edge function and a valid email provider secret.
+
+## Project structure
+
+```text
+retail-insight-hub/
+|-- src/
+|   |-- components/
+|   |-- contexts/
+|   |-- hooks/
+|   |-- integrations/
+|   |-- lib/
+|   `-- pages/
+|-- backend/
+|   |-- auth/
+|   |-- database/
+|   |-- routes/
+|   `-- services/
+|-- supabase/
+|   |-- functions/
+|   `-- migrations/
+|-- docs/
+`-- public/
 ```
-retailmind/
-├── src/                          # Frontend source code
-│   ├── components/               # React components
-│   │   ├── ui/                   # shadcn/ui components
-│   │   ├── layout/               # Layout components
-│   │   ├── AIChatAssistant.tsx   # AI chat interface
-│   │   ├── GoalsAchievements.tsx # Gamification
-│   │   └── ScheduledReports.tsx  # Report automation
-│   ├── contexts/                 # React contexts
-│   │   ├── AuthContext.tsx       # Authentication state
-│   │   ├── ThemeContext.tsx      # Theme management
-│   │   └── NotificationContext.tsx # Notifications
-│   ├── pages/                    # Page components
-│   │   ├── dashboard/            # Dashboard pages
-│   │   └── Login.tsx             # Authentication
-│   ├── hooks/                    # Custom React hooks
-│   ├── lib/                      # Utilities and API clients
-│   └── integrations/             # External integrations
-├── backend/                      # Flask backend
-│   ├── routes/                   # API endpoints
-│   ├── services/                 # Business logic
-│   ├── auth/                     # Authentication
-│   └── database/                 # Database models
-├── supabase/                     # Lovable Cloud config
-│   ├── functions/                # Edge functions
-│   │   └── ai-chat/              # AI assistant endpoint
-│   └── config.toml               # Supabase configuration
-└── public/                       # Static assets
-```
 
-## 🚀 Getting Started
+## Local setup
 
 ### Prerequisites
-- Node.js 18+ and npm
-- Python 3.11+ (for Flask backend)
 
-### Frontend Setup
+- Node.js 18+
+- npm
+- Python 3.11+
+- A Supabase project
+
+### Frontend
+
 ```bash
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
-
-# Build for production
-npm run build
 ```
 
-### Backend Setup (Optional - for local ML processing)
+The app runs on `http://localhost:8080` in the current local setup.
+
+### Backend
+
 ```bash
-# Navigate to backend
 cd backend
-
-# Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
+venv\Scripts\activate
 pip install -r requirements.txt
-
-# Run Flask server
-python app.py
+python run_dev_server.py
 ```
 
-### Environment Variables
+The backend default local URL is `http://localhost:5000`.
 
-Create a `.env` file in the root directory:
+## Environment variables
+
+### Frontend `.env`
+
+Use `.env.example` as the template.
 
 ```env
-# Optional: For Google OAuth
-VITE_GOOGLE_CLIENT_ID=your-google-client-id
-
-# Auto-configured by Lovable Cloud
-VITE_SUPABASE_URL=https://xxx.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-key
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-anon-key
+VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 ```
 
-## 📊 Database Schema
+### Backend `backend/.env`
 
-The application uses the following main tables:
+Use `backend/.env.example` as the template.
 
-| Table | Description |
-|-------|-------------|
-| `profiles` | User profile information |
-| `notifications` | Real-time notification storage |
-| `goals` | User-defined analytics goals |
-| `achievements` | Achievement definitions |
-| `user_achievements` | Earned achievements per user |
-| `scheduled_reports` | Automated report configurations |
-| `chat_messages` | AI chat conversation history |
+Important values:
 
-## 🔒 Security Features
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_KEY`
+- `SECRET_KEY`
+- `JWT_SECRET_KEY`
+- `CORS_ORIGINS`
 
-- Row Level Security (RLS) on all user tables
-- JWT-based authentication
-- Secure password hashing with salt
-- Session timeout configuration
-- CORS protection
+## Supabase checklist
 
-## 🎨 Theming
+### 1. Apply migrations
 
-RetailMind supports three themes:
-- **Light Mode** - Clean, bright interface
-- **Dark Mode** - Easy on the eyes
-- **System** - Follows OS preference
+Run the SQL files in `supabase/migrations/` in your Supabase project, including the realtime POS migration:
 
-Customize colors via CSS variables in `src/index.css`.
+- `supabase/migrations/20260316103000_realtime_pos.sql`
 
-## 📱 Responsive Design
+### 2. Deploy edge functions
 
-Fully responsive across all devices:
-- Desktop (1280px+)
-- Tablet (768px - 1279px)
-- Mobile (< 768px)
+Deploy the functions in `supabase/functions/` that your environment needs:
 
-Mobile-specific features:
-- Hamburger menu with slide-out sidebar
-- Touch-optimized interactions
-- Collapsible sections
+- `forecast`
+- `segments`
+- `basket`
+- `alerts`
+- `ai-chat`
+- `send-report`
+- `pos-terminal`
 
-## 🤖 AI Integration
+### 3. Configure Google sign-in
 
-The RetailMind AI assistant uses Google's Gemini 3 Flash model via Lovable AI Gateway:
+In Google Cloud Console:
 
-- Real-time streaming responses
-- Context-aware retail analytics guidance
-- Natural language data queries
-- Markdown-formatted responses
+- create a Web OAuth client
+- add your local origin such as `http://localhost:8080`
+- keep the client secret only in secure backend/provider settings
 
-## 📈 Analytics Modules
+In Supabase:
 
-### Sales Forecasting
-- Linear regression model
-- Time series visualization
-- Trend analysis
-- Demand prediction
+- enable Google under `Auth -> Providers -> Google`
+- use the same Google client ID and secret
+- add the correct allowed redirect/callback URLs for your environment
 
-### Customer Segmentation
-- K-Means clustering
-- RFM analysis
-- Behavioral grouping
-- Marketing recommendations
+### 4. Configure report email delivery
 
-### Market Basket Analysis
-- Association rule mining
-- Cross-sell opportunities
-- Product affinity mapping
-- Bundle suggestions
+The report-sending edge function needs its provider secret configured in Supabase secrets. If you are using Resend, set `RESEND_API_KEY` before testing live report delivery.
 
-## 🔗 API Endpoints
+## Demo POS testing
 
-### Flask Backend
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/health` | GET | Health check |
-| `/api/auth/login` | POST | Email login |
-| `/api/auth/register` | POST | User registration |
-| `/api/forecast` | POST | Generate forecast |
-| `/api/segments` | POST | Customer segmentation |
-| `/api/basket` | POST | Basket analysis |
-| `/api/alerts` | GET | Get smart alerts |
-| `/api/upload` | POST | Upload CSV data |
+1. Sign in.
+2. Go to `Dashboard -> Live POS`.
+3. Click `Seed Demo Products`.
+4. Click `Start Transaction`.
+5. Simulate a scan or enter a demo barcode manually.
+6. Add multiple products to the same transaction to exercise basket analysis.
+7. Repeat scans to test low-stock notifications.
 
-### Edge Functions
-| Function | Description |
-|----------|-------------|
-| `ai-chat` | AI assistant endpoint |
+Demo barcodes:
 
-## 📄 License
+- `8901030895489` - Basmati Rice 5kg
+- `8906008100012` - Sunflower Oil 1L
+- `8901719123456` - Digestive Biscuits
+- `8901491102233` - Bath Soap Pack
+- `8902080007654` - Toned Milk 1L
 
-MIT License - feel free to use this project for personal or commercial purposes.
+## Useful scripts
 
-## 🙏 Acknowledgments
+```bash
+npm run dev
+npm run build
+npm run preview
+npm run lint
+```
 
-- Built with [Lovable](https://lovable.dev)
-- UI components from [shadcn/ui](https://ui.shadcn.com)
-- Icons from [Lucide](https://lucide.dev)
-- AI powered by Google Gemini via Lovable AI
+## Docs
+
+- System diagrams: `docs/system-diagrams.md`
+
+## Notes
+
+- Local `.env`, virtual environments, build artifacts, and cache files are intentionally ignored and should not be committed.
+- If analytics appear empty after switching Supabase projects, confirm migrations and edge function deployments first.

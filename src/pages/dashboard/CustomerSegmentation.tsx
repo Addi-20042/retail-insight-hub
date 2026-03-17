@@ -29,7 +29,7 @@ const CustomerSegmentation: React.FC = () => {
       <div className="space-y-8">
         <PageHeader title="Customer Segmentation" description="K-Means clustering analysis of customer buying patterns" />
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="chart-container">
-          <EmptyState icon={<Users className="w-8 h-8 text-muted-foreground" />} title="No Data for Segmentation" description="Upload sales data with customer information to generate customer segments." />
+          <EmptyState icon={<Users className="w-8 h-8 text-muted-foreground" />} title="No Data for Segmentation" description="Upload sales data or use Live POS scans to generate product and customer segments." />
         </motion.div>
       </div>
     );

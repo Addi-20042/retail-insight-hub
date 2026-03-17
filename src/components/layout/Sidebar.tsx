@@ -3,13 +3,13 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BarChart3, Users, ShoppingCart, Upload, LogOut,
-  LayoutDashboard, Brain, Settings, Target, Table2
+  LayoutDashboard, Brain, Settings, Target, Table2, ScanLine
 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import BackendStatus from '@/components/BackendStatus';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Overview', end: true },
@@ -17,6 +17,7 @@ const navItems = [
   { path: '/dashboard/segmentation', icon: Users, label: 'Customer Segmentation' },
   { path: '/dashboard/basket', icon: ShoppingCart, label: 'Market Basket' },
   { path: '/dashboard/goals', icon: Target, label: 'Goals & Reports' },
+  { path: '/dashboard/live-pos', icon: ScanLine, label: 'Live POS' },
   { path: '/dashboard/upload', icon: Upload, label: 'Data Upload' },
   { path: '/dashboard/data', icon: Table2, label: 'Data Management' },
   { path: '/dashboard/settings', icon: Settings, label: 'Settings' },
@@ -26,37 +27,22 @@ interface SidebarProps {
   onNavigate?: () => void;
 }
 
+const getInitials = (name?: string) => {
+  const parts = (name || 'Retail User').trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() || '').join('') || 'RU';
+};
+
 const Sidebar: React.FC<SidebarProps> = ({ onNavigate }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
 
-  const { data: profile } = useQuery({
-    queryKey: ['profile', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('display_name, avatar_url')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-  });
-
-  const displayName = profile?.display_name || user?.name || 'User';
-  const avatarUrl = profile?.avatar_url || user?.avatar;
-
   const handleLogout = () => {
-    logout();
+    void logout();
     onNavigate?.();
   };
 
   return (
     <aside className="w-64 h-screen sidebar-gradient flex flex-col border-r border-sidebar-border overflow-hidden">
-      {/* Logo */}
       <div className="p-5 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
           <motion.div
@@ -74,7 +60,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = item.end
@@ -119,25 +104,25 @@ const Sidebar: React.FC<SidebarProps> = ({ onNavigate }) => {
         })}
       </nav>
 
-      {/* Theme Toggle */}
-      <div className="px-3 py-2 flex items-center justify-end border-t border-sidebar-border/50">
+      <div className="px-3 py-2 flex items-center justify-between border-t border-sidebar-border/50">
+        <BackendStatus />
         <ThemeToggle />
       </div>
 
-      {/* User section */}
       <div className="p-3 border-t border-sidebar-border">
         <div className="flex items-center gap-2.5 mb-2 px-2">
-          <div className="relative">
-            <img
-              src={avatarUrl}
-              alt={displayName}
-              className="w-8 h-8 rounded-full bg-sidebar-accent object-cover"
-            />
+          <div className="relative shrink-0">
+            <Avatar className="w-8 h-8 border border-sidebar-border bg-sidebar-accent">
+              <AvatarImage src={user?.avatar} alt={user?.name || 'RetailMind user'} />
+              <AvatarFallback className="bg-sidebar-accent text-[10px] font-semibold text-sidebar-foreground">
+                {getInitials(user?.name)}
+              </AvatarFallback>
+            </Avatar>
             <div className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-success border border-sidebar-background" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-sidebar-foreground truncate">{displayName}</p>
-            <p className="text-[10px] text-sidebar-muted truncate">{user?.email}</p>
+            <p className="text-xs font-semibold text-sidebar-foreground truncate">{user?.name || 'Retail User'}</p>
+            <p className="text-[10px] text-sidebar-muted truncate">{user?.email || 'Signed in'}</p>
           </div>
         </div>
         <button

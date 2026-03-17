@@ -1,101 +1,93 @@
 """
-Supabase database client
-Replaces SQLite with Supabase for all data operations
+Supabase database client helpers.
 """
-import os
+
+from typing import Optional
+
 from config import get_config
 
-# Move import inside try to catch import errors
-# try:
-#     from supabase import create_client, Client
-# except ImportError:
-    # Fallback if supabase has issues
-create_client = None
-Client = None
+try:
+    from supabase import Client, create_client
+except ImportError:
+    Client = None
+    create_client = None
 
-_supabase_client = None
+_supabase_client: Optional[Client] = None
 
-def get_db_connection():
-    """Get database connection (returns Supabase client for compatibility)"""
-    return get_supabase()
 
-def get_supabase():
-    """Get Supabase client instance (singleton)"""
+def get_supabase() -> Optional[Client]:
+    """Return a singleton Supabase client when credentials are available."""
     global _supabase_client
-    if _supabase_client is None:
-        if create_client is None:
-            print("[WARNING] Supabase not available - using demo mode")
-            return None
-        
-        config = get_config()
-        url = config.SUPABASE_URL
-        key = config.SUPABASE_SERVICE_KEY
-        
-        if not url or not key or 'placeholder' in url:
-            print("[INFO] Demo mode - Supabase credentials not configured")
-            return None
-        
-        try:
-            _supabase_client = create_client(url, key)
-        except Exception as e:
-            print(f"[WARNING] Supabase connection failed: {e}")
-            return None
-    
+
+    if _supabase_client is not None:
+        return _supabase_client
+
+    if create_client is None:
+        print("[WARNING] Supabase SDK not available - backend is running without DB access")
+        return None
+
+    config = get_config()
+    url = getattr(config, "SUPABASE_URL", None)
+    key = getattr(config, "SUPABASE_SERVICE_KEY", None)
+
+    if not url or not key:
+        print("[INFO] Supabase credentials are not configured yet")
+        return None
+
+    try:
+        _supabase_client = create_client(url, key)
+    except Exception as exc:
+        print(f"[WARNING] Supabase connection failed: {exc}")
+        return None
+
     return _supabase_client
 
 
+def get_db_connection() -> Optional[Client]:
+    """Compatibility helper for legacy callers."""
+    return get_supabase()
+
+
 def init_db(db_path: str = None):
-    """Initialize database connection (now uses Supabase)"""
+    """Initialize the Supabase connection if available."""
     try:
         client = get_supabase()
-        # Test connection
         if client:
-            result = client.table('sales_data').select('id').limit(1).execute()
+            client.table("sales_data").select("id").limit(1).execute()
             print("[SUCCESS] Connected to Supabase database")
-    except Exception as e:
-        print(f"[WARNING] Supabase connection warning: {e}")
+        else:
+            print("[INFO] Backend started without a live Supabase connection")
+    except Exception as exc:
+        print(f"[WARNING] Supabase connection warning: {exc}")
         print("  Backend will still start but database operations may fail.")
-        print("  Set SUPABASE_URL and SUPABASE_SERVICE_KEY in your .env file.")
+        print("  Set SUPABASE_URL and SUPABASE_SERVICE_KEY in backend/.env.")
 
 
 def get_sales_data(user_id: str = None):
-    """
-    Fetch sales data from Supabase
-    
-    Args:
-        user_id: Optional user ID to filter by
-        
-    Returns:
-        list: Sales data records
-    """
+    """Fetch sales data from Supabase."""
     client = get_supabase()
-    query = client.table('sales_data').select('*').order('date', desc=False)
-    
+    if client is None:
+        return []
+
+    query = client.table("sales_data").select("*").order("date", desc=False)
+
     if user_id:
-        query = query.eq('user_id', user_id)
-    
+        query = query.eq("user_id", user_id)
+
     result = query.execute()
     return result.data or []
 
 
 def get_sales_dataframe(user_id: str = None):
-    """
-    Get sales data as a pandas DataFrame
-    
-    Args:
-        user_id: Optional user ID to filter by
-        
-    Returns:
-        pd.DataFrame: Sales data
-    """
+    """Return sales data as a pandas DataFrame."""
     import pandas as pd
-    
+
     data = get_sales_data(user_id)
     if not data:
         return pd.DataFrame()
-    
-    df = pd.DataFrame(data)
-    if 'date' in df.columns:
-        df['date'] = pd.to_datetime(df['date'])
-    
-    return df
+
+    dataframe = pd.DataFrame(data)
+    if "date" in dataframe.columns:
+        dataframe["date"] = pd.to_datetime(dataframe["date"])
+
+    return dataframe

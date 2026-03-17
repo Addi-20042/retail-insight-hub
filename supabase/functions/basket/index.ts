@@ -3,7 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -15,7 +16,8 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -25,17 +27,20 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const url = new URL(req.url);
     const searchProduct = url.searchParams.get("product") || "";
 
-    // Fetch sales data with transaction IDs
     const { data: salesData, error: dbError } = await supabase
       .from("sales_data")
       .select("product, transaction_id, customer_id, date");
@@ -43,61 +48,63 @@ serve(async (req) => {
     if (dbError) throw dbError;
 
     if (!salesData || salesData.length === 0) {
-      return new Response(JSON.stringify({
-        rules: [], avg_confidence: 0, avg_lift: 0
-      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(
+        JSON.stringify({
+          rules: [],
+          avg_confidence: 0,
+          avg_lift: 0,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // Group by transaction - try transaction_id first, then customer_id+date combo
     const transactions = new Map<string, Set<string>>();
     for (const row of salesData) {
-      // Use transaction_id if available, otherwise group by customer_id + date
-      const txKey = row.transaction_id || 
-        (row.customer_id && row.date ? `${row.customer_id}_${row.date}` : null);
-      
+      const txKey =
+        row.transaction_id || (row.customer_id && row.date ? `${row.customer_id}_${row.date}` : null);
+
       if (!txKey) continue;
-      
+
       if (!transactions.has(txKey)) {
         transactions.set(txKey, new Set());
       }
       transactions.get(txKey)!.add(row.product);
     }
 
-    // Only consider transactions with 2+ products
-    const multiProductTx = Array.from(transactions.values()).filter(s => s.size >= 2);
-    const nTx = multiProductTx.length;
+    const multiProductTx = Array.from(transactions.values()).filter((tx) => tx.size >= 2);
+    if (multiProductTx.length >= 1) {
+      return generateRules(multiProductTx, searchProduct, corsHeaders);
+    }
 
-    if (nTx < 2) {
-      // Fallback: try grouping by just customer_id (all purchases by same customer)
-      const customerBaskets = new Map<string, Set<string>>();
-      for (const row of salesData) {
-        const key = row.customer_id || row.transaction_id;
-        if (!key) continue;
-        if (!customerBaskets.has(key)) {
-          customerBaskets.set(key, new Set());
-        }
-        customerBaskets.get(key)!.add(row.product);
+    const customerBaskets = new Map<string, Set<string>>();
+    for (const row of salesData) {
+      const key = row.customer_id || row.transaction_id;
+      if (!key) continue;
+      if (!customerBaskets.has(key)) {
+        customerBaskets.set(key, new Set());
       }
+      customerBaskets.get(key)!.add(row.product);
+    }
 
-      const multiCustomerBaskets = Array.from(customerBaskets.values()).filter(s => s.size >= 2);
-      
-      if (multiCustomerBaskets.length < 2) {
-        return new Response(JSON.stringify({
-          rules: [], avg_confidence: 0, avg_lift: 0,
-          message: "Not enough multi-product transactions found. Each transaction in your data contains only a single product. Upload data where customers buy multiple products in the same transaction."
-        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-
-      // Use customer baskets instead
+    const multiCustomerBaskets = Array.from(customerBaskets.values()).filter((basket) => basket.size >= 2);
+    if (multiCustomerBaskets.length >= 1) {
       return generateRules(multiCustomerBaskets, searchProduct, corsHeaders);
     }
 
-    return generateRules(multiProductTx, searchProduct, corsHeaders);
-
+    return new Response(
+      JSON.stringify({
+        rules: [],
+        avg_confidence: 0,
+        avg_lift: 0,
+        message: "Scan multiple products into the same POS transaction or upload grouped transaction data to generate basket analysis.",
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (error) {
     console.error("Basket analysis error:", error);
-    return new Response(JSON.stringify({ error: (error as Error).message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" }
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
@@ -105,28 +112,25 @@ serve(async (req) => {
 function generateRules(
   baskets: Set<string>[],
   searchProduct: string,
-  corsHeaders: Record<string, string>
+  headers: Record<string, string>,
 ): Response {
-  const nTx = baskets.length;
+  const transactionCount = baskets.length;
 
-  // Count individual product support
   const productSupport = new Map<string, number>();
-  for (const tx of baskets) {
-    for (const product of tx) {
+  for (const basket of baskets) {
+    for (const product of basket) {
       productSupport.set(product, (productSupport.get(product) || 0) + 1);
     }
   }
 
-  // Get top products (by frequency)
   const topProducts = Array.from(productSupport.entries())
     .sort((a, b) => b[1] - a[1])
     .slice(0, 40)
-    .map(([p]) => p);
+    .map(([product]) => product);
 
-  // Count pairwise co-occurrences
   const pairCounts = new Map<string, number>();
-  for (const tx of baskets) {
-    const items = Array.from(tx).filter(p => topProducts.includes(p));
+  for (const basket of baskets) {
+    const items = Array.from(basket).filter((product) => topProducts.includes(product));
     for (let i = 0; i < items.length; i++) {
       for (let j = i + 1; j < items.length; j++) {
         const key = [items[i], items[j]].sort().join("|||");
@@ -135,34 +139,39 @@ function generateRules(
     }
   }
 
-  // Generate rules
   const rules: Array<{
-    productA: string; productB: string;
-    support: number; confidence: number; lift: number;
+    productA: string;
+    productB: string;
+    support: number;
+    confidence: number;
+    lift: number;
   }> = [];
 
   for (const [key, count] of pairCounts.entries()) {
     const [a, b] = key.split("|||");
-    const support = count / nTx;
+    const support = count / transactionCount;
 
-    const supportA = (productSupport.get(a) || 0) / nTx;
-    const supportB = (productSupport.get(b) || 0) / nTx;
+    const supportA = (productSupport.get(a) || 0) / transactionCount;
+    const supportB = (productSupport.get(b) || 0) / transactionCount;
 
     const confidenceAB = supportA > 0 ? support / supportA : 0;
     const confidenceBA = supportB > 0 ? support / supportB : 0;
-    const lift = (supportA > 0 && supportB > 0) ? support / (supportA * supportB) : 0;
+    const lift = supportA > 0 && supportB > 0 ? support / (supportA * supportB) : 0;
 
     if (confidenceAB >= 0.05) {
       rules.push({
-        productA: a, productB: b,
+        productA: a,
+        productB: b,
         support: Math.round(support * 10000) / 10000,
         confidence: Math.round(confidenceAB * 10000) / 10000,
         lift: Math.round(lift * 10000) / 10000,
       });
     }
+
     if (confidenceBA >= 0.05) {
       rules.push({
-        productA: b, productB: a,
+        productA: b,
+        productB: a,
         support: Math.round(support * 10000) / 10000,
         confidence: Math.round(confidenceBA * 10000) / 10000,
         lift: Math.round(lift * 10000) / 10000,
@@ -170,28 +179,27 @@ function generateRules(
     }
   }
 
-  // Sort by lift
   rules.sort((a, b) => b.lift - a.lift);
 
-  // Filter by search if provided
   let filteredRules = rules;
   if (searchProduct) {
     const search = searchProduct.toLowerCase();
-    filteredRules = rules.filter(r =>
-      r.productA.toLowerCase().includes(search) ||
-      r.productB.toLowerCase().includes(search)
+    filteredRules = rules.filter(
+      (rule) => rule.productA.toLowerCase().includes(search) || rule.productB.toLowerCase().includes(search)
     );
   }
 
   const topRules = filteredRules.slice(0, 50);
-  const avgConfidence = topRules.length > 0
-    ? topRules.reduce((s, r) => s + r.confidence, 0) / topRules.length : 0;
-  const avgLift = topRules.length > 0
-    ? topRules.reduce((s, r) => s + r.lift, 0) / topRules.length : 0;
+  const avgConfidence =
+    topRules.length > 0 ? topRules.reduce((sum, rule) => sum + rule.confidence, 0) / topRules.length : 0;
+  const avgLift = topRules.length > 0 ? topRules.reduce((sum, rule) => sum + rule.lift, 0) / topRules.length : 0;
 
-  return new Response(JSON.stringify({
-    rules: topRules,
-    avg_confidence: Math.round(avgConfidence * 10000) / 10000,
-    avg_lift: Math.round(avgLift * 100) / 100,
-  }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  return new Response(
+    JSON.stringify({
+      rules: topRules,
+      avg_confidence: Math.round(avgConfidence * 10000) / 10000,
+      avg_lift: Math.round(avgLift * 100) / 100,
+    }),
+    { headers: { ...headers, "Content-Type": "application/json" } }
+  );
 }

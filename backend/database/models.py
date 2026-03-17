@@ -1,130 +1,138 @@
 """
 Database models and operations
+NOTE: This module has been migrated to Supabase. 
+Methods below are deprecated stubs for backward compatibility.
 """
-from database.db import get_db_connection
 from datetime import datetime
+from database.db import get_supabase
 
 class User:
-    """User model for authentication"""
+    """User model for authentication - Supabase implementation"""
     
     @staticmethod
     def find_by_google_id(google_id: str):
         """Find user by Google ID"""
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM users WHERE google_id = ?', (google_id,))
-        row = cursor.fetchone()
-        conn.close()
-        return dict(row) if row else None
+        try:
+            client = get_supabase()
+            response = client.table('users').select('*').eq('google_id', google_id).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error finding user by google_id: {e}")
+            return None
     
     @staticmethod
     def find_by_email(email: str):
         """Find user by email"""
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM users WHERE email = ?', (email,))
-        row = cursor.fetchone()
-        conn.close()
-        return dict(row) if row else None
+        try:
+            client = get_supabase()
+            response = client.table('users').select('*').eq('email', email).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error finding user by email: {e}")
+            return None
     
     @staticmethod
     def find_by_id(user_id: int):
         """Find user by ID"""
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))
-        row = cursor.fetchone()
-        conn.close()
-        return dict(row) if row else None
+        try:
+            client = get_supabase()
+            response = client.table('users').select('*').eq('id', user_id).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error finding user by id: {e}")
+            return None
     
     @staticmethod
     def find_by_provider(provider: str, provider_id: str):
         """Find user by social provider"""
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(f'SELECT * FROM users WHERE {provider}_id = ?', (provider_id,))
-        row = cursor.fetchone()
-        conn.close()
-        return dict(row) if row else None
+        try:
+            client = get_supabase()
+            response = client.table('users').select('*').eq(f'{provider}_id', provider_id).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error finding user by provider: {e}")
+            return None
     
     @staticmethod
     def create(google_id: str, email: str, name: str, avatar: str = None):
         """Create a new user with Google auth"""
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO users (google_id, email, name, avatar)
-            VALUES (?, ?, ?, ?)
-        ''', (google_id, email, name, avatar or f'https://api.dicebear.com/7.x/avataaars/svg?seed={name}'))
-        user_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
-        
-        UserSettings.create(user_id)
-        return User.find_by_id(user_id)
+        try:
+            client = get_supabase()
+            avatar = avatar or f'https://api.dicebear.com/7.x/avataaars/svg?seed={name}'
+            data = {
+                'google_id': google_id,
+                'email': email,
+                'name': name,
+                'avatar': avatar
+            }
+            response = client.table('users').insert(data).execute()
+            created_user = response.data[0] if response.data else None
+            if created_user:
+                UserSettings.create(created_user.get('id'))
+            return created_user
+        except Exception as e:
+            print(f"Error creating user: {e}")
+            return None
     
     @staticmethod
     def create_with_password(email: str, password_hash: str, password_salt: str, name: str):
         """Create a new user with email/password auth"""
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        avatar = f'https://api.dicebear.com/7.x/avataaars/svg?seed={name}'
-        cursor.execute('''
-            INSERT INTO users (email, name, avatar, password_hash, password_salt)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (email, name, avatar, password_hash, password_salt))
-        user_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
-        
-        UserSettings.create(user_id)
-        return User.find_by_id(user_id)
+        try:
+            client = get_supabase()
+            avatar = f'https://api.dicebear.com/7.x/avataaars/svg?seed={name}'
+            data = {
+                'email': email,
+                'name': name,
+                'avatar': avatar,
+                'password_hash': password_hash,
+                'password_salt': password_salt
+            }
+            response = client.table('users').insert(data).execute()
+            created_user = response.data[0] if response.data else None
+            if created_user:
+                UserSettings.create(created_user.get('id'))
+            return created_user
+        except Exception as e:
+            print(f"Error creating user with password: {e}")
+            return None
     
     @staticmethod
     def create_with_provider(provider: str, provider_id: str, email: str, name: str, avatar: str = None):
         """Create a new user with social provider"""
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        if provider == 'github':
-            cursor.execute('''
-                INSERT INTO users (github_id, email, name, avatar)
-                VALUES (?, ?, ?, ?)
-            ''', (provider_id, email, name, avatar))
-        elif provider == 'facebook':
-            cursor.execute('''
-                INSERT INTO users (facebook_id, email, name, avatar)
-                VALUES (?, ?, ?, ?)
-            ''', (provider_id, email, name, avatar))
-        
-        user_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
-        
-        UserSettings.create(user_id)
-        return User.find_by_id(user_id)
+        try:
+            client = get_supabase()
+            data = {
+                f'{provider}_id': provider_id,
+                'email': email,
+                'name': name,
+                'avatar': avatar
+            }
+            response = client.table('users').insert(data).execute()
+            created_user = response.data[0] if response.data else None
+            if created_user:
+                UserSettings.create(created_user.get('id'))
+            return created_user
+        except Exception as e:
+            print(f"Error creating user with provider: {e}")
+            return None
     
     @staticmethod
     def link_provider(user_id: int, provider: str, provider_id: str):
         """Link social provider to existing user"""
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(f'''
-            UPDATE users SET {provider}_id = ? WHERE id = ?
-        ''', (provider_id, user_id))
-        conn.commit()
-        conn.close()
+        try:
+            client = get_supabase()
+            client.table('users').update({f'{provider}_id': provider_id}).eq('id', user_id).execute()
+        except Exception as e:
+            print(f"Error linking provider: {e}")
     
     @staticmethod
     def update_last_login(user_id: int):
         """Update user's last login timestamp"""
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('''
-            UPDATE users SET last_login = ? WHERE id = ?
-        ''', (datetime.now(), user_id))
-        conn.commit()
-        conn.close()
+        try:
+            client = get_supabase()
+            client.table('users').update({'last_login': datetime.now().isoformat()}).eq('id', user_id).execute()
+        except Exception as e:
+            print(f"Error updating last login: {e}")
 
 
 class UserSettings:
@@ -133,46 +141,40 @@ class UserSettings:
     @staticmethod
     def find_by_user_id(user_id: int):
         """Find settings by user ID"""
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM user_settings WHERE user_id = ?', (user_id,))
-        row = cursor.fetchone()
-        conn.close()
-        return dict(row) if row else None
+        try:
+            client = get_supabase()
+            response = client.table('user_settings').select('*').eq('user_id', user_id).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error finding user settings: {e}")
+            return None
     
     @staticmethod
     def create(user_id: int):
         """Create default settings for user"""
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO user_settings (user_id) VALUES (?)
-        ''', (user_id,))
-        conn.commit()
-        conn.close()
+        try:
+            client = get_supabase()
+            data = {'user_id': user_id}
+            client.table('user_settings').insert(data).execute()
+        except Exception as e:
+            print(f"Error creating user settings: {e}")
     
     @staticmethod
     def update(user_id: int, **kwargs):
         """Update user settings"""
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        updates = []
-        values = []
-        for key, value in kwargs.items():
-            if key in ['theme', 'notifications_enabled', 'default_forecast_days']:
-                updates.append(f'{key} = ?')
-                values.append(value)
-        
-        if updates:
-            values.append(user_id)
-            cursor.execute(f'''
-                UPDATE user_settings SET {', '.join(updates)} WHERE user_id = ?
-            ''', values)
-            conn.commit()
-        
-        conn.close()
-        return UserSettings.find_by_user_id(user_id)
+        try:
+            client = get_supabase()
+            update_data = {}
+            for key, value in kwargs.items():
+                if key in ['theme', 'notifications_enabled', 'default_forecast_days']:
+                    update_data[key] = value
+            
+            if update_data:
+                client.table('user_settings').update(update_data).eq('user_id', user_id).execute()
+                return UserSettings.find_by_user_id(user_id)
+        except Exception as e:
+            print(f"Error updating user settings: {e}")
+        return None
 
 
 class UploadHistory:
@@ -181,26 +183,26 @@ class UploadHistory:
     @staticmethod
     def create(user_id: int, filename: str, rows_count: int, status: str = 'success'):
         """Record a new upload"""
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO upload_history (user_id, filename, rows_count, status)
-            VALUES (?, ?, ?, ?)
-        ''', (user_id, filename, rows_count, status))
-        conn.commit()
-        conn.close()
+        try:
+            client = get_supabase()
+            data = {
+                'user_id': user_id,
+                'filename': filename,
+                'rows_count': rows_count,
+                'status': status
+            }
+            client.table('upload_history').insert(data).execute()
+        except Exception as e:
+            print(f"Error creating upload history: {e}")
     
     @staticmethod
     def get_user_history(user_id: int, limit: int = 10):
         """Get upload history for user"""
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('''
-            SELECT * FROM upload_history 
-            WHERE user_id = ? 
-            ORDER BY uploaded_at DESC 
-            LIMIT ?
-        ''', (user_id, limit))
-        rows = cursor.fetchall()
-        conn.close()
-        return [dict(row) for row in rows]
+        try:
+            client = get_supabase()
+            response = client.table('upload_history').select('*').eq('user_id', user_id).order('uploaded_at', desc=True).limit(limit).execute()
+            return response.data or []
+        except Exception as e:
+            print(f"Error getting upload history: {e}")
+            return []
+

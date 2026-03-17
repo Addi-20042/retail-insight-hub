@@ -9,6 +9,9 @@ import {
   Settings,
   LogIn,
   Database,
+  ScanLine,
+  ShoppingCart,
+  Boxes,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -23,6 +26,9 @@ const getActivityIcon = (type: string) => {
     case 'forecast': return TrendingUp;
     case 'segment': return Users;
     case 'alert': return AlertTriangle;
+    case 'scan': return ScanLine;
+    case 'transaction': return ShoppingCart;
+    case 'inventory': return Boxes;
     case 'settings': return Settings;
     case 'login': return LogIn;
     default: return Activity;
@@ -36,6 +42,9 @@ const getActivityColor = (type: string) => {
     case 'forecast': return 'text-primary bg-primary/10';
     case 'segment': return 'text-chart-accent bg-chart-accent/10';
     case 'alert': return 'text-warning bg-warning/10';
+    case 'scan': return 'text-primary bg-primary/10';
+    case 'transaction': return 'text-success bg-success/10';
+    case 'inventory': return 'text-warning bg-warning/10';
     case 'settings': return 'text-muted-foreground bg-muted';
     case 'login': return 'text-success bg-success/10';
     default: return 'text-muted-foreground bg-muted';

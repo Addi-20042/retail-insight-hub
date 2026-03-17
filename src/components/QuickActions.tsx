@@ -7,6 +7,7 @@ import {
   Users,
   Search,
   Sparkles,
+  ScanLine,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { exportForecastToPdf } from '@/lib/exportPdf';
@@ -16,6 +17,14 @@ export const QuickActions: React.FC = () => {
   const navigate = useNavigate();
 
   const actions = [
+    {
+      icon: ScanLine,
+      label: 'Live POS',
+      description: 'Scan products live',
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
+      onClick: () => navigate('/dashboard/live-pos'),
+    },
     {
       icon: BarChart3,
       label: 'New Forecast',
@@ -70,7 +79,7 @@ export const QuickActions: React.FC = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2">
           {actions.map((action, index) => (
             <button
               key={index}
