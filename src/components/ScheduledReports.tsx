@@ -158,7 +158,7 @@ const ScheduledReports: React.FC = () => {
             <Calendar className="h-5 w-5 text-primary" />
             Scheduled Reports
           </CardTitle>
-          <CardDescription>Automate your analytics reports with email delivery via Resend</CardDescription>
+          <CardDescription>Automate your analytics reports with direct email delivery</CardDescription>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => {
           setDialogOpen(open);

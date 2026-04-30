@@ -76,7 +76,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       void syncUser(initialSession);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event === 'SIGNED_IN' && nextSession?.access_token) {
+        setTimeout(() => {
+          void supabase.functions.invoke('login-email', {
+            headers: {
+              Authorization: `Bearer ${nextSession.access_token}`,
+            },
+          }).catch((error) => {
+            console.error('Login email trigger failed:', error);
+          });
+        }, 0);
+      }
+
       void syncUser(nextSession);
     });
 
