@@ -1,116 +1,136 @@
 # RetailMind
 
-RetailMind is a retail analytics dashboard built with React, Vite, Supabase, and a small Flask service for local ML and utility endpoints. It combines sales analytics, live POS capture, notifications, scheduled reporting, and AI-assisted workflows in one app.
+RetailMind is a full-stack retail analytics and decision-support platform for stores that want to turn sales data into fast, practical business insights. It combines authentication, CSV ingestion, live POS capture, forecasting, segmentation, basket analysis, realtime notifications, scheduled reporting, and AI-assisted analytics in one responsive dashboard.
 
-## What is included
+![RetailMind login screen](docs/screenshots/login-desktop.png)
 
-- Email/password authentication plus Google sign-in
-- Dashboard overview with revenue and product metrics
-- Sales forecasting
-- Customer segmentation
-- Market basket analysis
-- CSV upload and dataset management
-- Live POS transactions with demo barcode seeding
-- Realtime notifications, activity feed, and low-stock alerts
-- Goal tracking and profile/settings management
-- Scheduled report workflow
-- Supabase edge functions for analytics, alerts, AI chat, POS, and report sending
+## Why This Project Stands Out
 
-## Stack
+- Built as a real product workflow, not a static dashboard demo.
+- Supports both historical CSV uploads and live POS transaction capture.
+- Uses Supabase Auth, Postgres, Realtime, Row Level Security-ready schemas, and Edge Functions.
+- Includes retail analytics modules for forecasting, customer segmentation, basket rules, alerts, reporting, and AI chat.
+- Designed with a polished React + TypeScript UI using shadcn/ui, Tailwind CSS, Framer Motion, and Recharts.
+- Google OAuth and email/password authentication are wired through Supabase Auth.
 
-### Frontend
+## Screenshots
 
-- React 18
-- TypeScript
-- Vite
-- Tailwind CSS
-- shadcn/ui
-- TanStack Query
-- Recharts
-- Framer Motion
-- Supabase JS
+| Desktop login | Mobile login |
+| --- | --- |
+| ![Desktop login](docs/screenshots/login-desktop.png) | ![Mobile login](docs/screenshots/login-mobile.png) |
 
-### Backend
+## Core Features
 
-- Flask
-- Pandas
-- NumPy
-- scikit-learn
+- **Authentication:** email/password sign up, password reset flow, profile sync, and Google sign-in.
+- **Dashboard overview:** revenue, product metrics, activity feed, quick actions, sparklines, and heatmaps.
+- **Sales forecasting:** trend-based demand forecasting from uploaded or POS-generated sales data.
+- **Customer segmentation:** customer grouping and behavioural analysis for targeting.
+- **Market basket analysis:** product association rules for bundling, layout, and cross-selling.
+- **CSV upload and data management:** upload, validate, store, and review sales datasets.
+- **Live POS:** seed demo products, scan/simulate barcodes, manage carts, update stock, and write POS sales records.
+- **Realtime operations:** activity logs, notification bell, low-stock alerts, and transaction updates.
+- **Goals and achievements:** track business goals and user progress.
+- **Scheduled reports:** create report schedules and trigger email/report workflows.
+- **AI assistant:** Supabase Edge Function integration for context-aware retail questions.
 
-### Platform
+## Tech Stack
 
-- Supabase Auth
-- Supabase Postgres
-- Supabase Realtime
-- Supabase Edge Functions
+| Layer | Technologies |
+| --- | --- |
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, Framer Motion |
+| Data and auth | Supabase Auth, Supabase Postgres, Supabase Realtime, Supabase JS |
+| Analytics/UI | Recharts, TanStack Query, custom hooks, PDF export helpers |
+| Serverless | Supabase Edge Functions for forecast, segmentation, basket, alerts, AI chat, POS, reports |
+| Local backend | Flask, Pandas, NumPy, scikit-learn utilities |
+| Tooling | ESLint, npm, Vite build pipeline |
 
-## Main app flows
+## Architecture
 
-### Authentication
+```text
+User
+  |
+  v
+React + Vite dashboard
+  |
+  +-- Supabase Auth: email/password, Google login, sessions
+  +-- Supabase Postgres: profiles, sales, products, POS, goals, reports, notifications
+  +-- Supabase Realtime: live POS, alerts, activity updates
+  +-- Supabase Edge Functions: analytics, AI chat, email/report workflows
+  +-- Flask backend: optional local ML/API utilities
+```
 
-- Email/password login and registration are handled through Supabase Auth.
-- Google sign-in uses a Google OAuth client on the frontend and Supabase identity sign-in.
-- Password reset is routed through `/reset-password`.
+Detailed diagrams are available in [docs/system-diagrams.md](docs/system-diagrams.md).
 
-### Analytics
-
-- Sales forecasting reads sales history and now falls back gracefully when POS-only data exists.
-- Customer segmentation reads uploaded and POS-generated sales records.
-- Market basket analysis works from uploaded sales data and multi-item POS transactions.
-
-### Live POS
-
-- Seed demo products directly in the app.
-- Start a transaction, scan or simulate a barcode, and watch cart totals, inventory, activity, and alerts update.
-- POS writes sales records that feed the analytics modules.
-
-### Reporting and email
-
-- Scheduled reports are stored in Supabase.
-- Report delivery depends on the deployed `send-report` edge function and a valid email provider secret.
-
-## Project structure
+## Project Structure
 
 ```text
 retail-insight-hub/
 |-- src/
-|   |-- components/
-|   |-- contexts/
-|   |-- hooks/
-|   |-- integrations/
-|   |-- lib/
-|   `-- pages/
-|-- backend/
-|   |-- auth/
-|   |-- database/
-|   |-- routes/
-|   `-- services/
+|   |-- components/       # reusable UI and feature components
+|   |-- contexts/         # auth, theme, notification state
+|   |-- hooks/            # Supabase and API data hooks
+|   |-- integrations/     # Supabase client and generated types
+|   |-- lib/              # API client, validations, formatting, PDF export
+|   `-- pages/            # login, auth callback, dashboard modules
+|-- backend/              # optional Flask service
 |-- supabase/
-|   |-- functions/
-|   `-- migrations/
+|   |-- functions/        # Edge Functions
+|   `-- migrations/       # database schema migrations
 |-- docs/
+|   |-- screenshots/      # README screenshots
+|   `-- system-diagrams.md
 `-- public/
 ```
 
-## Local setup
+## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
 - npm
-- Python 3.11+
 - A Supabase project
+- Google Cloud OAuth client for Google sign-in
+- Python 3.11+ only if running the optional Flask backend
 
-### Frontend
+### 1. Clone and Install
 
 ```bash
+git clone https://github.com/Addi-20042/retail-insight-hub.git
+cd retail-insight-hub
 npm install
+```
+
+### 2. Configure Environment
+
+Create `.env` from the template:
+
+```bash
+copy .env.example .env
+```
+
+Required frontend values:
+
+```env
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+```
+
+### 3. Run the Frontend
+
+```bash
 npm run dev
 ```
 
-The app runs on `http://localhost:8080` in the current local setup.
+The app runs on:
 
-### Backend
+- `http://localhost:8080`
+- `http://127.0.0.1:8080`
+
+Port `8080` is used intentionally because it is commonly added to Google OAuth authorized origins during local development.
+
+### 4. Optional Flask Backend
 
 ```bash
 cd backend
@@ -120,102 +140,85 @@ pip install -r requirements.txt
 python run_dev_server.py
 ```
 
-The backend default local URL is `http://localhost:5000`.
+Backend default URL:
 
-## Environment variables
-
-### Frontend `.env`
-
-Use `.env.example` as the template.
-
-```env
-VITE_SUPABASE_URL=https://your-project-ref.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-anon-key
-VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+```text
+http://localhost:5000
 ```
 
-### Backend `backend/.env`
+## Supabase Setup Checklist
 
-Use `backend/.env.example` as the template.
+1. Create a Supabase project.
+2. Apply the SQL migrations from `supabase/migrations/`.
+3. Enable Google in `Authentication -> Providers -> Google`.
+4. Add your Google OAuth client ID and client secret in Supabase.
+5. Add allowed local origins in Google Cloud:
+   - `http://localhost:8080`
+   - `http://127.0.0.1:8080`
+   - `http://localhost:8081`
+   - `http://127.0.0.1:8081`
+6. Deploy the needed Edge Functions from `supabase/functions/`.
+7. Set Supabase function secrets for provider keys such as report email and AI gateway keys.
 
-Important values:
+## Demo Workflow
 
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_KEY`
-- `SECRET_KEY`
-- `JWT_SECRET_KEY`
-- `CORS_ORIGINS`
-
-## Supabase checklist
-
-### 1. Apply migrations
-
-Run the SQL files in `supabase/migrations/` in your Supabase project, including the realtime POS migration:
-
-- `supabase/migrations/20260316103000_realtime_pos.sql`
-
-### 2. Deploy edge functions
-
-Deploy the functions in `supabase/functions/` that your environment needs:
-
-- `forecast`
-- `segments`
-- `basket`
-- `alerts`
-- `ai-chat`
-- `send-report`
-- `pos-terminal`
-
-### 3. Configure Google sign-in
-
-In Google Cloud Console:
-
-- create a Web OAuth client
-- add your local origin such as `http://localhost:8080`
-- keep the client secret only in secure backend/provider settings
-
-In Supabase:
-
-- enable Google under `Auth -> Providers -> Google`
-- use the same Google client ID and secret
-- add the correct allowed redirect/callback URLs for your environment
-
-### 4. Configure report email delivery
-
-The report-sending edge function needs its provider secret configured in Supabase secrets. If you are using Resend, set `RESEND_API_KEY` before testing live report delivery.
-
-## Demo POS testing
-
-1. Sign in.
+1. Sign in using email/password or Google.
 2. Go to `Dashboard -> Live POS`.
 3. Click `Seed Demo Products`.
 4. Click `Start Transaction`.
-5. Simulate a scan or enter a demo barcode manually.
-6. Add multiple products to the same transaction to exercise basket analysis.
-7. Repeat scans to test low-stock notifications.
+5. Use the simulate buttons or enter a demo barcode.
+6. Watch the active cart, product stock, notifications, and analytics data update.
 
 Demo barcodes:
 
-- `8901030895489` - Basmati Rice 5kg
-- `8906008100012` - Sunflower Oil 1L
-- `8901719123456` - Digestive Biscuits
-- `8901491102233` - Bath Soap Pack
-- `8902080007654` - Toned Milk 1L
+| Barcode | Product |
+| --- | --- |
+| `8901030895489` | Basmati Rice 5kg |
+| `8906008100012` | Sunflower Oil 1L |
+| `8901719123456` | Digestive Biscuits |
+| `8901491102233` | Bath Soap Pack |
+| `8902080007654` | Toned Milk 1L |
 
-## Useful scripts
+## Quality Checks
 
 ```bash
-npm run dev
-npm run build
-npm run preview
 npm run lint
+npm run build
 ```
 
-## Docs
+Current verification status:
 
-- System diagrams: `docs/system-diagrams.md`
+- Production build passes.
+- ESLint runs with zero errors. Some Fast Refresh and hook dependency warnings remain from existing component export patterns.
+- Login page verified locally on `http://localhost:8080/login` and `http://127.0.0.1:8080/login`.
 
-## Notes
+## What I Learned / Engineering Highlights
 
-- Local `.env`, virtual environments, build artifacts, and cache files are intentionally ignored and should not be committed.
-- If analytics appear empty after switching Supabase projects, confirm migrations and edge function deployments first.
+- Designing a modular analytics dashboard with real retail workflows.
+- Building Supabase-backed authentication, realtime updates, and Edge Function integrations.
+- Handling authenticated data access through reusable hooks and typed Supabase clients.
+- Creating practical POS flows that write transaction data back into analytics pipelines.
+- Balancing UX polish, responsive layouts, and data-heavy dashboards in React.
+
+## Roadmap
+
+- Add a hosted production demo link.
+- Add automated end-to-end tests for auth, upload, POS, and dashboard flows.
+- Add CI with build, lint, and secret scanning.
+- Improve chunk splitting for large production bundles.
+- Expand inventory optimization and reorder recommendations.
+- Add multi-store analytics and comparative reports.
+
+## Security Notes
+
+- `.env`, backend secrets, build artifacts, logs, and virtual environments are ignored by git.
+- Google client secrets, Supabase service-role keys, email provider keys, and AI provider keys must stay in provider dashboards or GitHub/Supabase secrets.
+- Public browser keys such as Supabase anon/publishable keys still rely on Supabase Row Level Security and policies for data protection.
+
+## Author
+
+Built by [Addi-20042](https://github.com/Addi-20042) as a full-stack retail analytics portfolio project.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
