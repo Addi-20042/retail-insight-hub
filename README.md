@@ -1,17 +1,17 @@
 # RetailMind
 
-RetailMind is a full-stack retail analytics and decision-support platform for stores that want to turn sales data into fast, practical business insights. It combines authentication, CSV ingestion, live POS capture, forecasting, segmentation, basket analysis, realtime notifications, scheduled reporting, and AI-assisted analytics in one responsive dashboard.
+RetailMind is a retail analytics and decision-support project built to show how raw sales, product, customer, and POS data can become practical business insight. It combines CSV ingestion, live POS capture, SQL-backed records, forecasting, customer segmentation, market basket analysis, realtime alerts, scheduled reporting, and AI-assisted analytics in one responsive dashboard.
 
 ![RetailMind login screen](docs/screenshots/login-desktop.png)
 
 ## Why This Project Stands Out
 
-- Built as a real product workflow, not a static dashboard demo.
-- Supports both historical CSV uploads and live POS transaction capture.
-- Uses Supabase Auth, Postgres, Realtime, Row Level Security-ready schemas, and Edge Functions.
-- Includes retail analytics modules for forecasting, customer segmentation, basket rules, alerts, reporting, and AI chat.
-- Designed with a polished React + TypeScript UI using shadcn/ui, Tailwind CSS, Framer Motion, and Recharts.
-- Google OAuth and email/password authentication are wired through Supabase Auth.
+- Built around business questions a retail analyst would answer: revenue movement, product performance, stock risk, customer behavior, and cross-sell opportunities.
+- Supports both historical CSV uploads and live POS transaction capture, so static datasets and operational events feed the same analytics workflow.
+- Uses Supabase Postgres, SQL migrations, typed clients, and realtime subscriptions to keep records structured and reviewable.
+- Includes forecasting, customer segmentation, basket rules, alerts, reporting, PDF export, and AI chat for insight generation.
+- Presents metrics through dashboard components such as KPI cards, sparklines, heatmaps, activity feeds, tables, and notification summaries.
+- Documents setup, architecture, screenshots, security notes, and demo workflows for recruiter review.
 
 ## Screenshots
 
@@ -33,12 +33,21 @@ RetailMind is a full-stack retail analytics and decision-support platform for st
 - **Scheduled reports:** create report schedules and trigger email/report workflows.
 - **AI assistant:** Supabase Edge Function integration for context-aware retail questions.
 
+## Data Analyst Focus
+
+- **Business KPIs:** revenue, transaction activity, product movement, stock status, customer behavior, and goal progress.
+- **Data ingestion:** CSV uploads and live POS entries create analytics-ready sales records.
+- **SQL data modeling:** Supabase migrations define operational tables for profiles, sales, products, POS, reports, goals, notifications, and audit-style activity.
+- **Analytical methods:** forecasting for demand planning, segmentation for customer groups, and association analysis for basket recommendations.
+- **Insight delivery:** dashboards, alerting, scheduled reports, PDF export, and AI-assisted Q&A help translate data into action.
+
 ## Tech Stack
 
 | Layer | Technologies |
 | --- | --- |
 | Frontend | React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, Framer Motion |
 | Data and auth | Supabase Auth, Supabase Postgres, Supabase Realtime, Supabase JS |
+| Analytics | SQL, PostgreSQL, forecasting logic, customer segmentation, market basket analysis, KPI calculations |
 | Analytics/UI | Recharts, TanStack Query, custom hooks, PDF export helpers |
 | Serverless | Supabase Edge Functions for forecast, segmentation, basket, alerts, AI chat, POS, reports |
 | Local backend | Flask, Pandas, NumPy, scikit-learn utilities |
@@ -194,11 +203,11 @@ Current verification status:
 
 ## What I Learned / Engineering Highlights
 
-- Designing a modular analytics dashboard with real retail workflows.
-- Building Supabase-backed authentication, realtime updates, and Edge Function integrations.
-- Handling authenticated data access through reusable hooks and typed Supabase clients.
+- Translating retail business questions into measurable KPIs, charts, alerts, and reports.
+- Modeling sales, products, profiles, POS transactions, reports, and notifications in SQL-backed tables.
+- Designing analytics workflows for forecasting, segmentation, and basket analysis.
 - Creating practical POS flows that write transaction data back into analytics pipelines.
-- Balancing UX polish, responsive layouts, and data-heavy dashboards in React.
+- Balancing data storytelling, responsive layouts, and operational workflows in React.
 
 ## Roadmap
 
@@ -217,7 +226,7 @@ Current verification status:
 
 ## Author
 
-Built by [Addi-20042](https://github.com/Addi-20042) as a full-stack retail analytics portfolio project.
+Built by [Addi-20042](https://github.com/Addi-20042) as a data analyst portfolio project with full-stack implementation.
 
 ## License
 
